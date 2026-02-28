@@ -7,7 +7,7 @@ function App() {
   const [editingId, setEditingId] = useState(null);
 
   // Đây là địa chỉ Backend Node.js của bạn đang chạy ở máy (localhost)
-  const API_URL = 'http://localhost:5000/api/users'; 
+  const API_URL = 'https://backend-video-learning-qjf8bddka-lid204s-projects.vercel.app/api/users'; 
 
   // Tự động lấy danh sách user khi vừa mở web lên
   useEffect(() => {
