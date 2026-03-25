@@ -2,15 +2,13 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 function App() {
-  // ================= 1. STATE QUẢN LÝ ĐĂNG NHẬP (AUTH) =================
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [authMode, setAuthMode] = useState('login'); // 'login' hoặc 'register'
-  const [currentUser, setCurrentUser] = useState(null); // Lưu thông tin người đang đăng nhập
+  const [authMode, setAuthMode] = useState('login'); 
+  const [currentUser, setCurrentUser] = useState(null);
 
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [registerForm, setRegisterForm] = useState({ name: '', email: '', phone: '', password: '' });
 
-  // ================= 2. STATE QUẢN LÝ ADMIN DASHBOARD =================
   const [activeTab, setActiveTab] = useState('users');
   const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', role: 'student' });
@@ -19,42 +17,31 @@ function App() {
 
   const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/users";
 
-  // ================= 3. LOGIC ĐĂNG NHẬP & ĐĂNG KÝ =================
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // [DÀNH CHO TEAM DEV]: Chỗ này hiện đang gọi tạm API GET để test PoC. 
-      // Nhiệm vụ của bạn Backend (Thành viên 5) là viết lại một API: POST /api/auth/login
       const response = await axios.get(API_URL);
-      const allUsers = response.data;
-      
-      // Tìm user có email khớp (Tạm thời bỏ qua pass vì PoC chưa làm chức năng check pass chuẩn)
-      const user = allUsers.find(u => u.email === loginForm.email);
-      
+      const user = response.data.find(u => u.email === loginForm.email);
       if (user) {
-        alert(`🎉 Chào mừng ${user.name} trở lại!`);
         setCurrentUser(user);
         setIsLoggedIn(true);
       } else {
-        alert("❌ Không tìm thấy tài khoản với Email này!");
+        alert("❌ Sai Email hoặc chưa đăng ký!");
       }
     } catch (err) {
-      alert("❌ Lỗi kết nối đến máy chủ!");
+      alert("❌ Lỗi máy chủ!");
     }
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      // Gắn mặc định role là student khi đăng ký mới
-      const newUser = { ...registerForm, role: 'student' };
-      await axios.post(API_URL, newUser);
-      
+      await axios.post(API_URL, { ...registerForm, role: 'student' });
       alert("✅ Đăng ký thành công! Vui lòng đăng nhập.");
-      setAuthMode('login'); // Chuyển về tab đăng nhập
+      setAuthMode('login');
       setRegisterForm({ name: '', email: '', phone: '', password: '' });
     } catch (err) {
-      alert("❌ Lỗi đăng ký (Có thể Email đã tồn tại)!");
+      alert("❌ Đăng ký thất bại (Email có thể đã tồn tại)!");
     }
   };
 
@@ -64,30 +51,25 @@ function App() {
     setLoginForm({ email: '', password: '' });
   };
 
-  // ================= 4. LOGIC ADMIN (CRUD USERS) =================
   const fetchUsers = async () => {
     if (!isLoggedIn) return;
     try {
       const response = await axios.get(API_URL);
       setUsers(response.data);
     } catch (err) {
-      console.error("Lỗi lấy dữ liệu:", err);
+      console.error(err);
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, [isLoggedIn]);
+  useEffect(() => { fetchUsers(); }, [isLoggedIn]);
 
   const handleSubmitAdmin = async (e) => {
     e.preventDefault();
     try {
       if (editingId) {
         await axios.put(`${API_URL}/${editingId}`, formData);
-        alert("✅ Cập nhật thành công!");
       } else {
         await axios.post(API_URL, formData);
-        alert("✅ Thêm mới thành công!");
       }
       setFormData({ name: '', email: '', phone: '', role: 'student' });
       setEditingId(null);
@@ -103,7 +85,7 @@ function App() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("⚠️ Bạn có chắc muốn xóa người dùng này?")) {
+    if (window.confirm("⚠️ Bạn có chắc muốn xóa vĩnh viễn?")) {
       try {
         await axios.delete(`${API_URL}/${id}`);
         fetchUsers();
@@ -118,45 +100,39 @@ function App() {
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // ================= GIAO DIỆN CHƯA ĐĂNG NHẬP (AUTH SCREEN) =================
+  // ================= 1. MÀN HÌNH ĐĂNG NHẬP (CANH GIỮA TUYỆT ĐỐI) =================
   if (!isLoggedIn) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: '#f1f5f9', fontFamily: 'sans-serif' }}>
-        <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', width: '100%', maxWidth: '400px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, minHeight: '100vh', backgroundColor: '#f0f4f8' }}>
+        <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '16px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)', width: '90%', maxWidth: '420px' }}>
           
-          <h2 style={{ textAlign: 'center', color: '#1e293b', marginBottom: '30px', fontSize: '24px' }}>
-            {authMode === 'login' ? '🔑 Đăng Nhập Hệ Thống' : '📝 Đăng Ký Tài Khoản'}
-          </h2>
+          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+            <div style={{ fontSize: '40px', marginBottom: '10px' }}>🎓</div>
+            <h2 style={{ color: '#0f172a', margin: 0 }}>{authMode === 'login' ? 'Chào mừng trở lại' : 'Tạo tài khoản mới'}</h2>
+            <p style={{ color: '#64748b', marginTop: '5px', fontSize: '14px' }}>Hệ thống quản lý Video Learning</p>
+          </div>
 
-          {/* Form Đăng nhập */}
           {authMode === 'login' ? (
-            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              <input type="email" placeholder="Email của bạn" required style={{ padding: '12px', border: '1px solid #cbd5e1', borderRadius: '8px' }}
-                value={loginForm.email} onChange={(e) => setLoginForm({...loginForm, email: e.target.value})} />
-              <input type="password" placeholder="Mật khẩu" required style={{ padding: '12px', border: '1px solid #cbd5e1', borderRadius: '8px' }}
-                value={loginForm.password} onChange={(e) => setLoginForm({...loginForm, password: e.target.value})} />
-              <button type="submit" style={{ padding: '12px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px' }}>Đăng Nhập</button>
+            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <input type="email" placeholder="Email của bạn" required style={inputStyle} value={loginForm.email} onChange={(e) => setLoginForm({...loginForm, email: e.target.value})} />
+              <input type="password" placeholder="Mật khẩu" required style={inputStyle} value={loginForm.password} onChange={(e) => setLoginForm({...loginForm, password: e.target.value})} />
+              <button type="submit" style={primaryBtnStyle}>Đăng Nhập 🚀</button>
             </form>
           ) : (
-          /* Form Đăng ký */
-            <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              <input type="text" placeholder="Họ và Tên" required style={{ padding: '12px', border: '1px solid #cbd5e1', borderRadius: '8px' }}
-                value={registerForm.name} onChange={(e) => setRegisterForm({...registerForm, name: e.target.value})} />
-              <input type="email" placeholder="Email" required style={{ padding: '12px', border: '1px solid #cbd5e1', borderRadius: '8px' }}
-                value={registerForm.email} onChange={(e) => setRegisterForm({...registerForm, email: e.target.value})} />
-              <input type="text" placeholder="Số điện thoại" required style={{ padding: '12px', border: '1px solid #cbd5e1', borderRadius: '8px' }}
-                value={registerForm.phone} onChange={(e) => setRegisterForm({...registerForm, phone: e.target.value})} />
-              <input type="password" placeholder="Mật khẩu" required style={{ padding: '12px', border: '1px solid #cbd5e1', borderRadius: '8px' }}
-                value={registerForm.password} onChange={(e) => setRegisterForm({...registerForm, password: e.target.value})} />
-              <button type="submit" style={{ padding: '12px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px' }}>Tạo Tài Khoản</button>
+            <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <input type="text" placeholder="Họ và tên" required style={inputStyle} value={registerForm.name} onChange={(e) => setRegisterForm({...registerForm, name: e.target.value})} />
+              <input type="email" placeholder="Email" required style={inputStyle} value={registerForm.email} onChange={(e) => setRegisterForm({...registerForm, email: e.target.value})} />
+              <input type="text" placeholder="Số điện thoại" required style={inputStyle} value={registerForm.phone} onChange={(e) => setRegisterForm({...registerForm, phone: e.target.value})} />
+              <input type="password" placeholder="Mật khẩu" required style={inputStyle} value={registerForm.password} onChange={(e) => setRegisterForm({...registerForm, password: e.target.value})} />
+              <button type="submit" style={successBtnStyle}>Đăng Ký Ngay ✨</button>
             </form>
           )}
 
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+          <div style={{ textAlign: 'center', marginTop: '25px', fontSize: '14px', color: '#64748b' }}>
             {authMode === 'login' ? (
-              <p style={{ color: '#64748b' }}>Chưa có tài khoản? <span onClick={() => setAuthMode('register')} style={{ color: '#3b82f6', cursor: 'pointer', fontWeight: 'bold' }}>Đăng ký ngay</span></p>
+              <span>Chưa có tài khoản? <b onClick={() => setAuthMode('register')} style={{ color: '#3b82f6', cursor: 'pointer' }}>Đăng ký</b></span>
             ) : (
-              <p style={{ color: '#64748b' }}>Đã có tài khoản? <span onClick={() => setAuthMode('login')} style={{ color: '#3b82f6', cursor: 'pointer', fontWeight: 'bold' }}>Đăng nhập</span></p>
+              <span>Đã có tài khoản? <b onClick={() => setAuthMode('login')} style={{ color: '#3b82f6', cursor: 'pointer' }}>Đăng nhập</b></span>
             )}
           </div>
         </div>
@@ -164,110 +140,115 @@ function App() {
     );
   }
 
-  // ================= GIAO DIỆN ĐÃ ĐĂNG NHẬP (ADMIN DASHBOARD) =================
+  // ================= 2. MÀN HÌNH ADMIN DASHBOARD =================
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'sans-serif', backgroundColor: '#f8fafc' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
       
-      {/* ===== SIDEBAR ===== */}
-      <div style={{ width: '260px', backgroundColor: '#0f172a', color: 'white', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '20px', textAlign: 'center', borderBottom: '1px solid #334155' }}>
-          <div style={{ fontSize: '22px', fontWeight: 'bold', color: '#38bdf8' }}>E-Learning Pro</div>
-          <div style={{ fontSize: '14px', color: '#94a3b8', marginTop: '5px' }}>Xin chào, {currentUser?.name} 👋</div>
+      {/* SIDEBAR SANG TRỌNG */}
+      <div style={{ width: '280px', backgroundColor: '#0f172a', color: 'white', display: 'flex', flexDirection: 'column', boxShadow: '4px 0 10px rgba(0,0,0,0.1)', zIndex: 10 }}>
+        <div style={{ padding: '30px 20px', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ fontSize: '24px', fontWeight: '800', color: '#38bdf8', letterSpacing: '1px' }}>E-LEARNING</div>
+          <div style={{ fontSize: '14px', color: '#94a3b8', marginTop: '8px', padding: '5px 10px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '20px', display: 'inline-block' }}>
+            👤 {currentUser?.name}
+          </div>
         </div>
         
-        <ul style={{ listStyle: 'none', padding: '15px', margin: 0, flex: 1 }}>
-          <li onClick={() => setActiveTab('users')} style={{ padding: '15px', cursor: 'pointer', borderRadius: '8px', marginBottom: '8px', backgroundColor: activeTab === 'users' ? '#3b82f6' : 'transparent' }}>
-            👥 Quản lý Người dùng
-          </li>
-          <li onClick={() => setActiveTab('courses')} style={{ padding: '15px', cursor: 'pointer', borderRadius: '8px', marginBottom: '8px', backgroundColor: activeTab === 'courses' ? '#3b82f6' : 'transparent' }}>
-            📚 Quản lý Khóa học
-          </li>
-          <li onClick={() => setActiveTab('lessons')} style={{ padding: '15px', cursor: 'pointer', borderRadius: '8px', backgroundColor: activeTab === 'lessons' ? '#3b82f6' : 'transparent' }}>
-            🎬 Quản lý Bài giảng
-          </li>
-        </ul>
+        <div style={{ padding: '20px', flex: 1 }}>
+          <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>Menu Quản Lý</div>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <li onClick={() => setActiveTab('users')} style={activeTab === 'users' ? activeMenuItem : menuItem}>👥 Người dùng</li>
+            <li onClick={() => setActiveTab('courses')} style={activeTab === 'courses' ? activeMenuItem : menuItem}>📚 Khóa học</li>
+            <li onClick={() => setActiveTab('lessons')} style={activeTab === 'lessons' ? activeMenuItem : menuItem}>🎬 Bài giảng</li>
+          </ul>
+        </div>
 
-        {/* NÚT ĐĂNG XUẤT NẰM Ở CUỐI SIDEBAR */}
-        <div style={{ padding: '15px' }}>
-          <button onClick={handleLogout} style={{ width: '100%', padding: '12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
-            🚪 Đăng xuất
-          </button>
+        <div style={{ padding: '20px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <button onClick={handleLogout} style={{ ...dangerBtnStyle, width: '100%' }}>🚪 Đăng Xuất</button>
         </div>
       </div>
 
-      {/* ===== NỘI DUNG CHÍNH ===== */}
-      <div style={{ flex: 1, padding: '30px', overflowY: 'auto' }}>
+      {/* KHU VỰC NỘI DUNG */}
+      <div style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
         
         {activeTab === 'users' && (
-          <div style={{ backgroundColor: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-            <h2 style={{ marginTop: 0, marginBottom: '20px', color: '#1e293b' }}>Quản Lý Tài Khoản Hệ Thống</h2>
-
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-              <input style={{ padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px', flex: 1 }} type="text" placeholder="Họ và tên" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
-              <input style={{ padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px', flex: 1 }} type="email" placeholder="Email" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
-              <input style={{ padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px', flex: 1 }} type="text" placeholder="Số điện thoại" required value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
-              <select style={{ padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px' }} value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value})}>
-                <option value="student">Học viên</option>
-                <option value="teacher">Giáo viên</option>
-                <option value="admin">Quản trị viên</option>
-              </select>
-              <button onClick={handleSubmitAdmin} style={{ padding: '10px 20px', backgroundColor: editingId ? '#f59e0b' : '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
-                {editingId ? "Cập Nhật" : "Thêm Mới"}
-              </button>
-              {editingId && <button onClick={cancelEdit} style={{ padding: '10px 20px', backgroundColor: '#64748b', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Hủy</button>}
+          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+              <h2 style={{ margin: 0, color: '#0f172a', fontSize: '28px' }}>Quản Lý Người Dùng</h2>
             </div>
 
-            <input type="text" placeholder="🔍 Tìm kiếm theo tên hoặc email..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ width: '100%', padding: '12px', border: '1px solid #cbd5e1', borderRadius: '6px', marginBottom: '15px' }} />
+            <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', marginBottom: '30px' }}>
+              <h3 style={{ marginTop: 0, color: '#334155', fontSize: '18px', marginBottom: '20px' }}>{editingId ? '✏️ Cập nhật thông tin' : '➕ Thêm thành viên mới'}</h3>
+              <form onSubmit={handleSubmitAdmin} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <input style={{...inputStyle, flex: 1, minWidth: '200px'}} type="text" placeholder="Họ và tên" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                <input style={{...inputStyle, flex: 1, minWidth: '200px'}} type="email" placeholder="Email" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+                <input style={{...inputStyle, flex: 1, minWidth: '150px'}} type="text" placeholder="Số điện thoại" required value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+                <select style={{...inputStyle, width: '150px', backgroundColor: 'white'}} value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value})}>
+                  <option value="student">Học viên</option>
+                  <option value="teacher">Giáo viên</option>
+                  <option value="admin">Admin</option>
+                </select>
+                <button type="submit" style={editingId ? warningBtnStyle : successBtnStyle}>{editingId ? "Cập Nhật" : "Lưu Mới"}</button>
+                {editingId && <button type="button" onClick={() => {setEditingId(null); setFormData({name:'', email:'', phone:'', role:'student'})}} style={neutralBtnStyle}>Hủy</button>}
+              </form>
+            </div>
 
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#f8fafc', textAlign: 'left', borderBottom: '2px solid #e2e8f0' }}>
-                  <th style={{ padding: '15px' }}>ID</th>
-                  <th style={{ padding: '15px' }}>Họ và Tên</th>
-                  <th style={{ padding: '15px' }}>Email</th>
-                  <th style={{ padding: '15px' }}>Vai trò</th>
-                  <th style={{ padding: '15px', textAlign: 'center' }}>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '15px' }}>{user.id}</td>
-                    <td style={{ padding: '15px', fontWeight: 'bold', color: '#0f172a' }}>{user.name}</td>
-                    <td style={{ padding: '15px', color: '#64748b' }}>{user.email}</td>
-                    <td style={{ padding: '15px' }}>
-                      <span style={{ backgroundColor: user.role === 'admin' ? '#fef2f2' : user.role === 'teacher' ? '#eff6ff' : '#f0fdf4', color: user.role === 'admin' ? '#dc2626' : user.role === 'teacher' ? '#2563eb' : '#16a34a', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td style={{ padding: '15px', textAlign: 'center' }}>
-                      <button onClick={() => handleEdit(user)} style={{ marginRight: '8px', padding: '6px 12px', border: '1px solid #cbd5e1', borderRadius: '4px', cursor: 'pointer', background: 'white' }}>Sửa</button>
-                      <button onClick={() => handleDelete(user.id)} style={{ padding: '6px 12px', border: '1px solid #fca5a5', borderRadius: '4px', cursor: 'pointer', background: '#fef2f2', color: '#dc2626' }}>Xóa</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div style={{ backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+              <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
+                <input type="text" placeholder="🔍 Tìm kiếm theo tên hoặc email..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{...inputStyle, width: '100%', maxWidth: '400px', backgroundColor: 'white'}} />
+              </div>
+              
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: 'white', color: '#64748b', fontSize: '14px', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '20px', borderBottom: '2px solid #e2e8f0' }}>ID</th>
+                      <th style={{ padding: '20px', borderBottom: '2px solid #e2e8f0' }}>Người dùng</th>
+                      <th style={{ padding: '20px', borderBottom: '2px solid #e2e8f0' }}>Liên hệ</th>
+                      <th style={{ padding: '20px', borderBottom: '2px solid #e2e8f0' }}>Vai trò</th>
+                      <th style={{ padding: '20px', borderBottom: '2px solid #e2e8f0', textAlign: 'right' }}>Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.map((user) => (
+                      <tr key={user.id} style={{ borderBottom: '1px solid #f1f5f9', transition: '0.2s' }}>
+                        <td style={{ padding: '20px', color: '#64748b' }}>#{user.id}</td>
+                        <td style={{ padding: '20px', fontWeight: 'bold', color: '#0f172a' }}>{user.name}</td>
+                        <td style={{ padding: '20px', color: '#64748b' }}>{user.email}<br/><span style={{fontSize: '12px', color: '#94a3b8'}}>{user.phone}</span></td>
+                        <td style={{ padding: '20px' }}>
+                          <span style={{ backgroundColor: user.role === 'admin' ? '#fef2f2' : user.role === 'teacher' ? '#eff6ff' : '#f0fdf4', color: user.role === 'admin' ? '#ef4444' : user.role === 'teacher' ? '#3b82f6' : '#10b981', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold' }}>
+                            {user.role}
+                          </span>
+                        </td>
+                        <td style={{ padding: '20px', textAlign: 'right' }}>
+                          <button onClick={() => handleEdit(user)} style={{...neutralBtnStyle, marginRight: '10px', padding: '8px 16px'}}>Sửa</button>
+                          <button onClick={() => handleDelete(user.id)} style={{...dangerBtnStyle, padding: '8px 16px', backgroundColor: '#fef2f2', color: '#ef4444'}}>Xóa</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
 
-        {activeTab === 'courses' && (
-          <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '12px', textAlign: 'center' }}>
-            <h2 style={{ color: '#0f172a' }}>📚 Quản Lý Khóa Học</h2>
-            <p style={{ color: '#64748b' }}>[DÀNH CHO TEAM DEV] - Tách phần này ra thành component riêng nhé.</p>
-          </div>
-        )}
-
-        {activeTab === 'lessons' && (
-          <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '12px', textAlign: 'center' }}>
-            <h2 style={{ color: '#0f172a' }}>🎬 Quản Lý Bài Giảng</h2>
-            <p style={{ color: '#64748b' }}>[DÀNH CHO TEAM DEV] - Thiết kế UI upload video tại đây.</p>
-          </div>
-        )}
-
+        {/* CÁC TAB KHÁC CHỜ DEV CODE */}
+        {activeTab === 'courses' && (<div style={{ textAlign: 'center', marginTop: '100px', color: '#64748b' }}><h2>📚 Khu vực Quản Lý Khóa Học</h2><p>Đang chờ team Dev hoàn thiện</p></div>)}
+        {activeTab === 'lessons' && (<div style={{ textAlign: 'center', marginTop: '100px', color: '#64748b' }}><h2>🎬 Khu vực Quản Lý Bài Giảng</h2><p>Đang chờ team Dev hoàn thiện</p></div>)}
       </div>
     </div>
   );
 }
+
+// ================= BỘ CSS INLINE DÙNG CHUNG (TẠO SỰ ĐỒNG NHẤT) =================
+const inputStyle = { padding: '14px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '15px', outline: 'none', transition: 'border 0.3s' };
+const primaryBtnStyle = { padding: '14px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '10px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', transition: '0.3s' };
+const successBtnStyle = { ...primaryBtnStyle, backgroundColor: '#10b981' };
+const warningBtnStyle = { ...primaryBtnStyle, backgroundColor: '#f59e0b' };
+const dangerBtnStyle = { ...primaryBtnStyle, backgroundColor: '#ef4444' };
+const neutralBtnStyle = { ...primaryBtnStyle, backgroundColor: 'white', color: '#334155', border: '1px solid #cbd5e1' };
+
+const menuItem = { padding: '16px 20px', cursor: 'pointer', borderRadius: '12px', color: '#cbd5e1', fontSize: '15px', fontWeight: '500', transition: '0.3s' };
+const activeMenuItem = { ...menuItem, backgroundColor: '#3b82f6', color: 'white', fontWeight: 'bold' };
 
 export default App;
