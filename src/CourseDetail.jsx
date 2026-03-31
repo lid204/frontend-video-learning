@@ -6,9 +6,9 @@ const CourseDetail = ({ currentUser }) => {
   const handleEnroll = async () => {
     try {
       // Gọi API POST /api/enrollments 
-      await axios.post("http://localhost:5000/api/enrollments", {
+      const response = await axios.post("https://backend-video-learning.vercel.app/api/enrollments", {
         user_id: currentUser?.id || 1, 
-        course_id: 101 // ID khóa học ví dụ
+        course_id: 101
       });
       
       // Hiện thông báo mượt mà thay vì alert() 
