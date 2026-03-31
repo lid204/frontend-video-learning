@@ -5,6 +5,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
+import HomePage from './HomePage';
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authMode, setAuthMode] = useState('login'); 
@@ -362,4 +364,13 @@ const neutralBtnStyle = { ...primaryBtnStyle, backgroundColor: 'white', color: '
 const menuItem = { padding: '16px 20px', cursor: 'pointer', borderRadius: '12px', color: '#cbd5e1', fontSize: '15px', fontWeight: '500', transition: '0.3s' };
 const activeMenuItem = { ...menuItem, backgroundColor: '#3b82f6', color: 'white', fontWeight: 'bold' };
 
-export default App;
+//export default App;
+// 2. Tạo hàm test với một cái tên KHÁC (đừng đặt là App nữa)
+function TestHomePage() {
+  return (
+    <HomePage />
+  );
+}
+
+// 3. Xuất cái hàm test này ra để chạy lên web
+export default TestHomePage;
