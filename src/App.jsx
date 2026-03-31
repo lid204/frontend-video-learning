@@ -25,7 +25,7 @@ function App() {
 
   // URL API (Đang gọi xuống Backend local của ông ở cổng 5000 để test)
   const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/users";
-  const LESSON_API_URL = "http://localhost:5000/api/lessons"; 
+  const LESSON_API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/lessons";
 
   // ================= XỬ LÝ AUTH & USERS =================
   const handleLogin = async (e) => {
