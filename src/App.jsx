@@ -1,3 +1,7 @@
+import CourseDetail from './CourseDetail'; //
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -273,7 +277,14 @@ function App() {
           </div>
         )}
 
-        {/* TAB BÀI GIẢNG (VỪA ĐƯỢC TÍCH HỢP) */}
+{/* TAB KHÓA HỌC (Code của Kieu-Vi) */}
+        {activeTab === 'courses' && (
+          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px' }}>
+            <CourseDetail currentUser={currentUser} />
+          </div>
+        )}
+
+        {/* TAB BÀI GIẢNG (Code xịn từ Main) */}
         {activeTab === 'lessons' && (
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
@@ -334,9 +345,8 @@ function App() {
             </div>
           </div>
         )}
-
-        {activeTab === 'courses' && (<div style={{ textAlign: 'center', marginTop: '100px', color: '#64748b' }}><h2>📚 Khu vực Quản Lý Khóa Học</h2><p>Đang chờ team Dev hoàn thiện</p></div>)}
       </div>
+      <ToastContainer position="top-right" autoClose={3000} theme="colored" />
     </div>
   );
 }
