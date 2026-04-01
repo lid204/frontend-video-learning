@@ -21,7 +21,7 @@ function App() {
 
   // --- STATE MỚI CHO BÀI GIẢNG ---
   const [lessons, setLessons] = useState([]);
-  const [lessonForm, setLessonForm] = useState({ course_id: 1, title: '', video_url: '' });
+  const [lessonForm, setLessonForm] = useState({ course_id: 101, title: '', video_url: '' });
 
   // URL API (Đang gọi xuống Backend local của ông ở cổng 5000 để test)
   const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/users";
@@ -115,7 +115,7 @@ function App() {
   const fetchLessons = async () => {
     try {
       // Lấy tạm bài giảng của khóa học ID 1
-      const response = await axios.get(`${LESSON_API_URL}/course/1`);
+      const response = await axios.get(`${LESSON_API_URL}/course/101`);
       setLessons(response.data);
     } catch (err) {
       console.error("Chưa có bài giảng hoặc chưa bật server Backend", err);
