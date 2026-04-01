@@ -1,11 +1,17 @@
-import CourseDetail from './CourseDetail'; //
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// Import 2 trang giao diện của bạn
+import HomePage from './HomePage';
+import CoursesPage from './CoursesPage';
+import CourseDetail from './CourseDetail'; 
 
 function App() {
+  // === STATE QUẢN LÝ LUỒNG ĐI (QUAN TRỌNG) ===
+  const [currentView, setCurrentView] = useState('home'); 
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authMode, setAuthMode] = useState('login'); 
   const [currentUser, setCurrentUser] = useState(null);
@@ -19,11 +25,11 @@ function App() {
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // --- STATE MỚI CHO BÀI GIẢNG ---
+  // --- STATE CHO BÀI GIẢNG ---
   const [lessons, setLessons] = useState([]);
   const [lessonForm, setLessonForm] = useState({ course_id: 101, title: '', video_url: '' });
 
-  // URL API (Đang gọi xuống Backend local của ông ở cổng 5000 để test)
+  // URL API (Link Vercel chuẩn)
   const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/users";
   const LESSON_API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/lessons";
 
@@ -36,6 +42,7 @@ function App() {
       if (user) {
         setCurrentUser(user);
         setIsLoggedIn(true);
+        setCurrentView('dashboard'); // Đăng nhập thành công -> Vào Dashboard
       } else {
         alert("❌ Sai Email hoặc chưa đăng ký!");
       }
@@ -60,6 +67,7 @@ function App() {
     setIsLoggedIn(false);
     setCurrentUser(null);
     setLoginForm({ email: '', password: '' });
+    setCurrentView('home'); // Đăng xuất -> Quay về trang chủ
   };
 
   const fetchUsers = async () => {
@@ -67,9 +75,7 @@ function App() {
     try {
       const response = await axios.get(API_URL);
       setUsers(response.data);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   useEffect(() => { fetchUsers(); }, [isLoggedIn]);
@@ -85,9 +91,7 @@ function App() {
       setFormData({ name: '', email: '', phone: '', role: 'student' });
       setEditingId(null);
       fetchUsers();
-    } catch (err) {
-      alert("❌ Lỗi thao tác!");
-    }
+    } catch (err) { alert("❌ Lỗi thao tác!"); }
   };
 
   const handleEdit = (user) => {
@@ -100,9 +104,7 @@ function App() {
       try {
         await axios.delete(`${API_URL}/${id}`);
         fetchUsers();
-      } catch (err) {
-        alert("❌ Lỗi khi xóa!");
-      }
+      } catch (err) { alert("❌ Lỗi khi xóa!"); }
     }
   };
 
@@ -111,18 +113,14 @@ function App() {
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // ================= XỬ LÝ BÀI GIẢNG (TASK 3) =================
+  // ================= XỬ LÝ BÀI GIẢNG =================
   const fetchLessons = async () => {
     try {
-      // Lấy tạm bài giảng của khóa học ID 1
       const response = await axios.get(`${LESSON_API_URL}/course/101`);
       setLessons(response.data);
-    } catch (err) {
-      console.error("Chưa có bài giảng hoặc chưa bật server Backend", err);
-    }
+    } catch (err) { console.error("Chưa có bài giảng", err); }
   };
 
-  // Gọi fetchLessons mỗi khi click sang tab 'lessons'
   useEffect(() => {
     if (activeTab === 'lessons') fetchLessons();
   }, [activeTab]);
@@ -131,28 +129,50 @@ function App() {
     e.preventDefault();
     try {
       const response = await axios.post(LESSON_API_URL, lessonForm);
-      alert(`✅ Thêm bài giảng thành công!\nHệ thống tự cắt link, ID YouTube lưu trong DB là: ${response.data.video_url}`);
+      alert(`✅ Thêm thành công!\nID YouTube: ${response.data.video_url}`);
       setLessonForm({ ...lessonForm, title: '', video_url: '' });
-      fetchLessons(); // Load lại bảng
+      fetchLessons();
     } catch (err) {
-      // Đã nâng cấp logic: Bắt chính xác lỗi từ Backend trả về
       if (err.response) {
-        // Lỗi do gửi sai data, lỗi Database (khóa học không tồn tại...)
         alert(`❌ Lỗi từ Server: ${err.response.data.details || err.response.data.error}`);
       } else {
-        // Lỗi do thực sự chưa bật Backend cổng 5000
-        alert("❌ Không kết nối được Server. Nhớ bật Terminal Backend chạy cổng 5000 nhé!");
+        alert("❌ Lỗi từ Server hoặc Backend chưa bật!");
       }
     }
   };
 
-  // ================= GIAO DIỆN =================
-  if (!isLoggedIn) {
+  // ================= ĐIỀU HƯỚNG MÀN HÌNH =================
+
+  // 1. Nếu đang ở Trang Chủ
+  if (currentView === 'home') {
+    return (
+      <HomePage 
+        onLoginClick={() => setCurrentView('auth')} 
+        onViewCoursesClick={() => setCurrentView('courses')} 
+      />
+    );
+  }
+
+  // 2. Nếu đang ở Trang Siêu thị Khóa học
+  if (currentView === 'courses') {
+    return (
+      <CoursesPage 
+        onBackToHome={() => setCurrentView('home')} 
+      />
+    );
+  }
+
+  // 3. Nếu bấm Đăng nhập (Chưa có tài khoản)
+  if (currentView === 'auth') {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, minHeight: '100vh', backgroundColor: '#f0f4f8' }}>
-        <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '16px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)', width: '90%', maxWidth: '420px' }}>
+        <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '16px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)', width: '90%', maxWidth: '420px', position: 'relative' }}>
           
-          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+          <button onClick={() => setCurrentView('home')} style={{ position: 'absolute', top: '20px', left: '20px', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontWeight: 'bold' }}>
+            🔙 Quay lại
+          </button>
+
+          <div style={{ textAlign: 'center', marginBottom: '30px', marginTop: '20px' }}>
             <div style={{ fontSize: '40px', marginBottom: '10px' }}>🎓</div>
             <h2 style={{ color: '#0f172a', margin: 0 }}>{authMode === 'login' ? 'Chào mừng trở lại' : 'Tạo tài khoản mới'}</h2>
             <p style={{ color: '#64748b', marginTop: '5px', fontSize: '14px' }}>Hệ thống quản lý Video Learning</p>
@@ -175,21 +195,20 @@ function App() {
           )}
 
           <div style={{ textAlign: 'center', marginTop: '25px', fontSize: '14px', color: '#64748b' }}>
-            {authMode === 'login' ? (
-              <span>Chưa có tài khoản? <b onClick={() => setAuthMode('register')} style={{ color: '#3b82f6', cursor: 'pointer' }}>Đăng ký</b></span>
-            ) : (
+            {authMode === 'login' ? 
+              <span>Chưa có tài khoản? <b onClick={() => setAuthMode('register')} style={{ color: '#3b82f6', cursor: 'pointer' }}>Đăng ký</b></span> : 
               <span>Đã có tài khoản? <b onClick={() => setAuthMode('login')} style={{ color: '#3b82f6', cursor: 'pointer' }}>Đăng nhập</b></span>
-            )}
+            }
           </div>
         </div>
       </div>
     );
   }
 
+  // 4. Màn hình Dashboard (Khi đã đăng nhập thành công)
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
-      
-      {/* SIDEBAR SANG TRỌNG */}
+      {/* SIDEBAR */}
       <div style={{ width: '280px', backgroundColor: '#0f172a', color: 'white', display: 'flex', flexDirection: 'column', boxShadow: '4px 0 10px rgba(0,0,0,0.1)', zIndex: 10 }}>
         <div style={{ padding: '30px 20px', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <div style={{ fontSize: '24px', fontWeight: '800', color: '#38bdf8', letterSpacing: '1px' }}>E-LEARNING</div>
@@ -197,7 +216,7 @@ function App() {
             👤 {currentUser?.name}
           </div>
         </div>
-        
+
         <div style={{ padding: '20px', flex: 1 }}>
           <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>Menu Quản Lý</div>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -277,14 +296,14 @@ function App() {
           </div>
         )}
 
-{/* TAB KHÓA HỌC (Code của Kieu-Vi) */}
+        {/* TAB KHÓA HỌC */}
         {activeTab === 'courses' && (
           <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px' }}>
             <CourseDetail currentUser={currentUser} />
           </div>
         )}
 
-        {/* TAB BÀI GIẢNG (Code xịn từ Main) */}
+        {/* TAB BÀI GIẢNG */}
         {activeTab === 'lessons' && (
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
@@ -295,10 +314,9 @@ function App() {
             <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', marginBottom: '30px' }}>
               <h3 style={{ marginTop: 0, color: '#334155', fontSize: '18px', marginBottom: '20px' }}>➕ Thêm Video Mới</h3>
               <form onSubmit={handleAddLesson} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
-                <input style={{...inputStyle, width: '120px'}} type="number" placeholder="ID Khóa học" required value={lessonForm.course_id} onChange={(e) => setLessonForm({...lessonForm, course_id: e.target.value})} title="Nhập ID khóa học (Test mặc định là 1)" />
+                <input style={{...inputStyle, width: '120px'}} type="number" placeholder="ID Khóa học" required value={lessonForm.course_id} onChange={(e) => setLessonForm({...lessonForm, course_id: e.target.value})} title="Nhập ID khóa học (Test mặc định là 101)" />
                 <input style={{...inputStyle, flex: 1, minWidth: '200px'}} type="text" placeholder="Tên bài giảng (VD: Bài 1: Giới thiệu Node.js)" required value={lessonForm.title} onChange={(e) => setLessonForm({...lessonForm, title: e.target.value})} />
                 <input style={{...inputStyle, flex: 2, minWidth: '250px'}} type="url" placeholder="Dán link YouTube (VD: https://www.youtube.com/watch?v=123)" required value={lessonForm.video_url} onChange={(e) => setLessonForm({...lessonForm, video_url: e.target.value})} />
-                
                 <button type="submit" style={successBtnStyle}>Thêm Bài Giảng</button>
               </form>
               <p style={{ fontSize: '13px', color: '#ef4444', marginTop: '12px', fontStyle: 'italic' }}>
