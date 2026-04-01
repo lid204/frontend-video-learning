@@ -5,8 +5,8 @@ import { toast } from 'react-toastify'; // Tích hợp thư viện theo yêu c�
 const CourseDetail = ({ currentUser }) => {
   const handleEnroll = async () => {
     try {
-      // Gọi API POST /api/enrollments 
-      await axios.post("http://localhost:5000/api/enrollments", {
+      // Gọi API POST /api/enrollments với link Backend thật trên Vercel
+      await axios.post("https://backend-video-learning-lid204s-projects.vercel.app/api/enrollments", {
         user_id: currentUser?.id || 1, 
         course_id: 101 // ID khóa học ví dụ
       });
