@@ -6,7 +6,6 @@ import 'react-toastify/dist/ReactToastify.css';
 // Import các trang giao diện của team
 import HomePage from './HomePage';
 import CoursesPage from './CoursesPage';
-import CourseDetail from './CourseDetail'; 
 import CourseManager from './CourseManager'; // Code mới của Danh
 
 function App() {
