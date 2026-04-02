@@ -3,10 +3,11 @@ import axios from 'axios';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Import 2 trang giao diện của bạn
+// Import các trang giao diện của team
 import HomePage from './HomePage';
 import CoursesPage from './CoursesPage';
 import CourseDetail from './CourseDetail'; 
+import CourseManager from './CourseManager'; // Code mới của Danh
 
 function App() {
   // === STATE QUẢN LÝ LUỒNG ĐI (QUAN TRỌNG) ===
@@ -33,7 +34,7 @@ function App() {
   const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/users";
   const LESSON_API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/lessons";
 
-  // ================= XỬ LÝ AUTH & USERS =================
+  // ================= CÁC HÀM XỬ LÝ =================
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -205,7 +206,7 @@ function App() {
     );
   }
 
-  // 4. Màn hình Dashboard (Khi đã đăng nhập thành công)
+  // 4. Màn hình Dashboard Admin (Khi đã đăng nhập)
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
       {/* SIDEBAR */}
@@ -234,6 +235,7 @@ function App() {
       {/* KHU VỰC NỘI DUNG */}
       <div style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
         
+        {/* TAB NGƯỜI DÙNG */}
         {activeTab === 'users' && (
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
@@ -296,11 +298,9 @@ function App() {
           </div>
         )}
 
-        {/* TAB KHÓA HỌC */}
+        {/* TAB KHÓA HỌC: HIỂN THỊ COMPONENT CỦA DANH */}
         {activeTab === 'courses' && (
-          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px' }}>
-            <CourseDetail currentUser={currentUser} />
-          </div>
+          <CourseManager /> 
         )}
 
         {/* TAB BÀI GIẢNG */}
