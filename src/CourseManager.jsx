@@ -1,27 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ReactQuill from 'react-quill-new';
-import 'react-quill-new/dist/quill.snow.css';// Khung CSS giao diện của React Quill
+import 'react-quill-new/dist/quill.snow.css';
 
 function CourseManager() {
   const [courses, setCourses] = useState([]);
   
-  // State lưu thông tin form
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     price: '',
-    thumbnail_url: '' // Ban đầu rỗng, sau khi upload ảnh xong sẽ điền link vào đây
+    thumbnail_url: '' 
   });
 
-  const [imageFile, setImageFile] = useState(null); // Lưu file ảnh chọn từ máy tính
-  const [isUploading, setIsUploading] = useState(false); // Trạng thái đang tải ảnh lên
+  const [imageFile, setImageFile] = useState(null); 
+  const [isUploading, setIsUploading] = useState(false); 
 
-  // Link API của bạn (Nhớ trỏ đúng localhost:5000 đang chạy Backend)
-  const API_URL = "http://localhost:5000/api/courses";
-  const UPLOAD_URL = "http://localhost:5000/api/upload";
+  // ĐÃ SỬA THÀNH LINK VERCEL CHÍNH THỨC CỦA TEAM
+  const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/courses";
+  const UPLOAD_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/upload";
 
-  // 1. Hàm lấy danh sách khóa học
   const fetchCourses = async () => {
     try {
       const response = await axios.get(API_URL);
@@ -35,7 +33,6 @@ function CourseManager() {
     fetchCourses();
   }, []);
 
-  // 2. Hàm xử lý Upload Ảnh & Lưu Khóa học
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!imageFile && !formData.thumbnail_url) {
@@ -46,7 +43,6 @@ function CourseManager() {
     try {
       let finalImageUrl = formData.thumbnail_url;
 
-      // Nếu có chọn file ảnh mới từ máy tính thì đẩy lên Cloudinary trước
       if (imageFile) {
         setIsUploading(true);
         const uploadData = new FormData();
@@ -56,16 +52,14 @@ function CourseManager() {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         
-        finalImageUrl = uploadRes.data.imageUrl; // Lấy link ảnh Cloudinary trả về
+        finalImageUrl = uploadRes.data.imageUrl; 
       }
 
-      // Sau khi có link ảnh, gửi toàn bộ data xuống Database
       const courseData = { ...formData, thumbnail_url: finalImageUrl };
       await axios.post(API_URL, courseData);
       
       alert("✅ Thêm khóa học thành công!");
       
-      // Reset form
       setFormData({ title: '', description: '', price: '', thumbnail_url: '' });
       setImageFile(null);
       setIsUploading(false);
@@ -82,9 +76,7 @@ function CourseManager() {
     <div style={{ padding: '20px', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
       <h2 style={{ color: '#0f172a', marginBottom: '20px' }}>📚 Quản Lý Khóa Học</h2>
 
-      {/* FORM THÊM KHÓA HỌC */}
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '40px' }}>
-        
         <div style={{ display: 'flex', gap: '15px' }}>
           <input 
             type="text" placeholder="Tên khóa học..." required
@@ -98,7 +90,6 @@ function CourseManager() {
           />
         </div>
 
-        {/* Khu vực chọn ảnh */}
         <div style={{ padding: '10px', border: '1px dashed #3b82f6', borderRadius: '6px', backgroundColor: '#eff6ff' }}>
           <label style={{ fontWeight: 'bold', marginRight: '10px' }}>🖼️ Ảnh bìa (Thumbnail):</label>
           <input 
@@ -107,14 +98,13 @@ function CourseManager() {
           />
         </div>
 
-        {/* Trình soạn thảo văn bản React Quill */}
         <div>
           <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>📝 Mô tả chi tiết:</label>
           <ReactQuill 
             theme="snow" 
             value={formData.description} 
             onChange={(value) => setFormData({...formData, description: value})} 
-            style={{ height: '150px', marginBottom: '40px' }} // Cách lề dưới cho khỏi bị che nút
+            style={{ height: '150px', marginBottom: '40px' }} 
           />
         </div>
 
@@ -126,7 +116,6 @@ function CourseManager() {
         </button>
       </form>
 
-      {/* BẢNG HIỂN THỊ DANH SÁCH */}
       <h3 style={{ color: '#334155' }}>📋 Danh sách đã tạo</h3>
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
         <thead>
@@ -143,7 +132,7 @@ function CourseManager() {
                 <img src={course.thumbnail_url} alt="thumbnail" style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />
               </td>
               <td style={{ padding: '10px', fontWeight: 'bold' }}>{course.title}</td>
-              <td style={{ padding: '10px', color: '#10b981' }}>{course.price} đ</td>
+              <td style={{ padding: '10px', color: '#10b981' }}>{Number(course.price).toLocaleString('vi-VN')} đ</td>
             </tr>
           ))}
         </tbody>
