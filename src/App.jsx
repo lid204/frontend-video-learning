@@ -152,6 +152,9 @@ function App() {
         <HomePage 
           onLoginClick={() => setCurrentView('auth')} 
           onViewCoursesClick={() => setCurrentView('courses')} 
+          isLoggedIn={isLoggedIn}          {/* Truyền trạng thái đăng nhập */}
+          currentUser={currentUser}        {/* Truyền thông tin user */}
+          onLogoutClick={handleLogout}     {/* Truyền hàm đăng xuất */}
         />
         
         {/* NÚT QUẢN LÝ HỆ THỐNG LƠ LỬNG (Chỉ hiện cho Admin/Teacher) */}
@@ -246,6 +249,9 @@ function App() {
           
           {/* PHÂN QUYỀN THANH MENU DỰA TRÊN ROLE */}
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <li onClick={() => setCurrentView('home')} style={{ padding: '16px 20px', cursor: 'pointer', borderRadius: '12px', color: '#cbd5e1', fontSize: '15px', fontWeight: '500', transition: '0.3s', backgroundColor: 'rgba(255,255,255,0.05)' }}>
+            🏠 Về Trang Chủ
+            </li>
             {/* CHỈ ADMIN MỚI ĐƯỢC XEM TAB NGƯỜI DÙNG */}
             {currentUser?.role === 'admin' && (
               <li onClick={() => setActiveTab('users')} style={activeTab === 'users' ? activeMenuItem : menuItem}>👥 Người dùng</li>

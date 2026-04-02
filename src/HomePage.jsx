@@ -6,7 +6,8 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
-function HomePage({ onLoginClick, onViewCoursesClick }) { // Nhận 2 hàm truyền từ App.jsx
+// SỬA DÒNG NÀY
+function HomePage({ onLoginClick, onViewCoursesClick, isLoggedIn, currentUser, onLogoutClick }) { // Nhận 2 hàm truyền từ App.jsx
   const [courses, setCourses] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -54,12 +55,25 @@ function HomePage({ onLoginClick, onViewCoursesClick }) { // Nhận 2 hàm truy�
         
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
           <span onClick={onViewCoursesClick} style={{ color: '#64748b', fontWeight: 'bold', cursor: 'pointer' }}>Khóa học</span>
-          <button 
-            onClick={onLoginClick} 
-            style={{ padding: '10px 24px', backgroundColor: '#0f172a', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
-          >
-            Đăng Nhập
-          </button>
+          {/* LOGIC ĐỔI NÚT NẰM Ở ĐÂY */}
+          {isLoggedIn ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <span style={{ fontWeight: 'bold', color: '#0f172a' }}>👤 {currentUser?.name}</span>
+              <button 
+                onClick={onLogoutClick} 
+                style={{ padding: '8px 16px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
+              >
+                Đăng Xuất
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={onLoginClick} 
+              style={{ padding: '10px 24px', backgroundColor: '#0f172a', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
+            >
+              Đăng Nhập
+            </button>
+          )}
         </div>
       </nav>
 
