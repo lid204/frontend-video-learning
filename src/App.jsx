@@ -1,4 +1,5 @@
-import CourseDetail from './CourseDetail'; //
+import CourseDetail from './CourseDetail';
+import LearningRoom from './LearningRoom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -22,6 +23,9 @@ function App() {
   // --- STATE MỚI CHO BÀI GIẢNG ---
   const [lessons, setLessons] = useState([]);
   const [lessonForm, setLessonForm] = useState({ course_id: 1, title: '', video_url: '' });
+
+  // --- STATE PHÒNG HỌC ---
+  const [selectedCourse, setSelectedCourse] = useState(null);
 
   // URL API (Đang gọi xuống Backend local của ông ở cổng 5000 để test)
   const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/users";
@@ -204,6 +208,15 @@ function App() {
             <li onClick={() => setActiveTab('users')} style={activeTab === 'users' ? activeMenuItem : menuItem}>👥 Người dùng</li>
             <li onClick={() => setActiveTab('courses')} style={activeTab === 'courses' ? activeMenuItem : menuItem}>📚 Khóa học</li>
             <li onClick={() => setActiveTab('lessons')} style={activeTab === 'lessons' ? activeMenuItem : menuItem}>🎬 Bài giảng</li>
+            <li
+              onClick={() => {
+                setSelectedCourse({ id: 101, title: 'Lập trình ReactJS cho Gen Z' });
+                setActiveTab('learning');
+              }}
+              style={activeTab === 'learning' ? { ...activeMenuItem, background: 'linear-gradient(135deg,#7c3aed,#3b82f6)', color: 'white' } : menuItem}
+            >
+              🎓 Phòng Học
+            </li>
           </ul>
         </div>
 
@@ -213,7 +226,7 @@ function App() {
       </div>
 
       {/* KHU VỰC NỘI DUNG */}
-      <div style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
+      <div style={{ flex: 1, padding: activeTab === 'learning' ? '0' : '40px', overflowY: activeTab === 'learning' ? 'hidden' : 'auto', display: 'flex', flexDirection: 'column' }}>
         
         {activeTab === 'users' && (
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -344,6 +357,15 @@ function App() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* PHÒNG HỌC với React Player */}
+        {activeTab === 'learning' && (
+          <LearningRoom
+            course={selectedCourse}
+            currentUser={currentUser}
+            onBack={() => setActiveTab('courses')}
+          />
         )}
       </div>
       <ToastContainer position="top-right" autoClose={3000} theme="colored" />
