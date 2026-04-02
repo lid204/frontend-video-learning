@@ -263,6 +263,27 @@ function App() {
             <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', marginBottom: '30px' }}>
               <form onSubmit={handleAddLesson} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}><input style={{...inputStyle, width: '120px'}} type="number" placeholder="ID" required value={lessonForm.course_id} onChange={(e) => setLessonForm({...lessonForm, course_id: e.target.value})} /><input style={{...inputStyle, flex: 1, minWidth: '200px'}} type="text" placeholder="Tên bài giảng" required value={lessonForm.title} onChange={(e) => setLessonForm({...lessonForm, title: e.target.value})} /><input style={{...inputStyle, flex: 2, minWidth: '250px'}} type="url" placeholder="Link YouTube" required value={lessonForm.video_url} onChange={(e) => setLessonForm({...lessonForm, video_url: e.target.value})} /><button type="submit" style={successBtnStyle}>Thêm</button></form>
             </div>
+            
+            {/* ĐÂY LÀ CÁI BẢNG MÀ MÌNH ĐÃ LỠ TAY XÓA MẤT! */}
+            <div style={{ backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead><tr style={{ backgroundColor: '#f8fafc', color: '#64748b', fontSize: '14px', textTransform: 'uppercase' }}><th style={{ padding: '20px', borderBottom: '2px solid #e2e8f0' }}>ID Bài</th><th style={{ padding: '20px', borderBottom: '2px solid #e2e8f0' }}>Khóa Học</th><th style={{ padding: '20px', borderBottom: '2px solid #e2e8f0' }}>Tiêu đề video</th><th style={{ padding: '20px', borderBottom: '2px solid #e2e8f0' }}>Mã YouTube ID</th></tr></thead>
+                  <tbody>
+                    {lessons.length === 0 ? (
+                      <tr><td colSpan="4" style={{ padding: '30px', textAlign: 'center', color: '#94a3b8' }}>Đang tải dữ liệu hoặc chưa có bài giảng nào...</td></tr>
+                    ) : (
+                      lessons.map((lesson) => (
+                        <tr key={lesson.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                          <td style={{ padding: '20px', color: '#64748b', fontWeight: 'bold' }}>#{lesson.id}</td><td style={{ padding: '20px', color: '#3b82f6', fontWeight: 'bold' }}>ID: {lesson.course_id}</td><td style={{ padding: '20px', color: '#0f172a' }}>{lesson.title}</td><td style={{ padding: '20px' }}><span style={{ backgroundColor: '#fef2f2', color: '#ef4444', padding: '6px 12px', borderRadius: '8px', fontSize: '14px', fontFamily: 'monospace' }}>{lesson.video_url}</span></td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
           </div>
         )}
       </div>
