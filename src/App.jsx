@@ -6,10 +6,11 @@ import 'react-toastify/dist/ReactToastify.css';
 // Import các trang giao diện của team
 import HomePage from './HomePage';
 import CoursesPage from './CoursesPage';
-import CourseManager from './CourseManager'; // Code mới của Danh
+import CourseManager from './CourseManager';
+import LearningRoom from './LearningRoom';
 
 function App() {
-  // === STATE QUẢN LÝ LUỒNG ĐI (QUAN TRỌNG) ===
+  // === STATE QUẢN LÝ LUỒNG ĐI ===
   const [currentView, setCurrentView] = useState('home'); 
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -29,7 +30,10 @@ function App() {
   const [lessons, setLessons] = useState([]);
   const [lessonForm, setLessonForm] = useState({ course_id: 101, title: '', video_url: '' });
 
-  // URL API
+  // --- STATE PHÒNG HỌC ---
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
+  // URL API CHÍNH THỨC
   const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/users";
   const LESSON_API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/lessons";
 
@@ -59,7 +63,7 @@ function App() {
       setAuthMode('login');
       setRegisterForm({ name: '', email: '', phone: '', password: '' });
     } catch (err) {
-      alert("❌ Đăng ký thất bại (Email có thể đã tồn tại)!");
+      alert("❌ Đăng ký thất bại!");
     }
   };
 
@@ -132,11 +136,7 @@ function App() {
       setLessonForm({ ...lessonForm, title: '', video_url: '' });
       fetchLessons();
     } catch (err) {
-      if (err.response) {
-        alert(`❌ Lỗi từ Server: ${err.response.data.details || err.response.data.error}`);
-      } else {
-        alert("❌ Lỗi từ Server hoặc Backend chưa bật!");
-      }
+      alert("❌ Lỗi thêm bài giảng!");
     }
   };
 
@@ -159,7 +159,7 @@ function App() {
               setCurrentView('dashboard');
               setActiveTab(currentUser.role === 'admin' ? 'users' : 'courses'); 
             }}
-            style={{ position: 'fixed', bottom: '30px', right: '30px', padding: '15px 25px', backgroundColor: '#f59e0b', color: 'white', border: 'none', borderRadius: '50px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 1000, transition: '0.3s' }}
+            style={{ position: 'fixed', bottom: '30px', right: '30px', padding: '15px 25px', backgroundColor: '#f59e0b', color: 'white', border: 'none', borderRadius: '50px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 1000 }}
           >
             ⚙️ Quản Lý Hệ Thống
           </button>
@@ -175,7 +175,7 @@ function App() {
   if (currentView === 'auth') {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, minHeight: '100vh', backgroundColor: '#f0f4f8' }}>
-        <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '16px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)', width: '90%', maxWidth: '420px', position: 'relative' }}>
+        <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '16px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', width: '90%', maxWidth: '420px', position: 'relative' }}>
           <button onClick={() => setCurrentView('home')} style={{ position: 'absolute', top: '20px', left: '20px', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontWeight: 'bold' }}>🔙 Quay lại</button>
           <div style={{ textAlign: 'center', marginBottom: '30px', marginTop: '20px' }}>
             <div style={{ fontSize: '40px', marginBottom: '10px' }}>🎓</div>
@@ -205,7 +205,6 @@ function App() {
     );
   }
 
-  // 4. Màn hình Dashboard Admin
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
       <div style={{ width: '280px', backgroundColor: '#0f172a', color: 'white', display: 'flex', flexDirection: 'column', boxShadow: '4px 0 10px rgba(0,0,0,0.1)', zIndex: 10 }}>
@@ -222,6 +221,7 @@ function App() {
               <>
                 <li onClick={() => setActiveTab('courses')} style={activeTab === 'courses' ? activeMenuItem : menuItem}>📚 Khóa học</li>
                 <li onClick={() => setActiveTab('lessons')} style={activeTab === 'lessons' ? activeMenuItem : menuItem}>🎬 Bài giảng</li>
+                <li onClick={() => { setSelectedCourse({ id: 101, title: 'Lập trình ReactJS cho Gen Z' }); setActiveTab('learning'); }} style={activeTab === 'learning' ? activeMenuItem : menuItem}>🎓 Phòng Học</li>
               </>
             )}
           </ul>
@@ -231,61 +231,39 @@ function App() {
         </div>
       </div>
 
-      <div style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
+      <div style={{ flex: 1, padding: activeTab === 'learning' ? '0' : '40px', overflowY: 'auto' }}>
         {activeTab === 'users' && (
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}><h2 style={{ margin: 0, color: '#0f172a', fontSize: '28px' }}>Quản Lý Người Dùng</h2></div>
-            <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', marginBottom: '30px' }}>
-              <form onSubmit={handleSubmitAdmin} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
-                <input style={{...inputStyle, flex: 1, minWidth: '200px'}} type="text" placeholder="Họ và tên" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
-                <input style={{...inputStyle, flex: 1, minWidth: '200px'}} type="email" placeholder="Email" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
-                <input style={{...inputStyle, flex: 1, minWidth: '150px'}} type="text" placeholder="Số điện thoại" required value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
-                <select style={{...inputStyle, width: '150px', backgroundColor: 'white'}} value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value})}><option value="student">Học viên</option><option value="teacher">Giáo viên</option><option value="admin">Admin</option></select>
+            <h2 style={{ color: '#0f172a', fontSize: '28px', marginBottom: '30px' }}>Quản Lý Người Dùng</h2>
+            <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '30px' }}>
+              <form onSubmit={handleSubmitAdmin} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                <input style={{...inputStyle, flex: 1}} type="text" placeholder="Họ và tên" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                <input style={{...inputStyle, flex: 1}} type="email" placeholder="Email" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+                <input style={{...inputStyle, flex: 1}} type="text" placeholder="Số điện thoại" required value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+                <select style={inputStyle} value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value})}><option value="student">Học viên</option><option value="teacher">Giáo viên</option><option value="admin">Admin</option></select>
                 <button type="submit" style={editingId ? warningBtnStyle : successBtnStyle}>{editingId ? "Cập Nhật" : "Lưu Mới"}</button>
-                {editingId && <button type="button" onClick={() => {setEditingId(null); setFormData({name:'', email:'', phone:'', role:'student'})}} style={neutralBtnStyle}>Hủy</button>}
               </form>
             </div>
-            <div style={{ backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-              <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}><input type="text" placeholder="🔍 Tìm kiếm..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{...inputStyle, width: '100%', maxWidth: '400px'}} /></div>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                  <thead><tr style={{ backgroundColor: 'white', color: '#64748b', fontSize: '14px', textTransform: 'uppercase' }}><th style={{ padding: '20px', borderBottom: '2px solid #e2e8f0' }}>ID</th><th style={{ padding: '20px', borderBottom: '2px solid #e2e8f0' }}>Người dùng</th><th style={{ padding: '20px', borderBottom: '2px solid #e2e8f0' }}>Vai trò</th><th style={{ padding: '20px', borderBottom: '2px solid #e2e8f0', textAlign: 'right' }}>Thao tác</th></tr></thead>
-                  <tbody>{filteredUsers.map((user) => (<tr key={user.id} style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '20px', color: '#64748b' }}>#{user.id}</td><td style={{ padding: '20px', fontWeight: 'bold' }}>{user.name} <br/><span style={{fontWeight: 'normal', fontSize: '13px', color: '#64748b'}}>{user.email}</span></td><td style={{ padding: '20px' }}>{user.role}</td><td style={{ padding: '20px', textAlign: 'right' }}><button onClick={() => handleEdit(user)} style={{...neutralBtnStyle, marginRight: '10px', padding: '8px 16px'}}>Sửa</button><button onClick={() => handleDelete(user.id)} style={{...dangerBtnStyle, padding: '8px 16px'}}>Xóa</button></td></tr>))}</tbody>
+            <div style={{ backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead><tr style={{ backgroundColor: '#f8fafc' }}><th style={{ padding: '20px' }}>ID</th><th style={{ padding: '20px' }}>Người dùng</th><th style={{ padding: '20px' }}>Vai trò</th><th style={{ padding: '20px', textAlign: 'right' }}>Thao tác</th></tr></thead>
+                  <tbody>{filteredUsers.map((user) => (<tr key={user.id} style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '20px' }}>#{user.id}</td><td style={{ padding: '20px' }}>{user.name}<br/><small>{user.email}</small></td><td style={{ padding: '20px' }}>{user.role}</td><td style={{ padding: '20px', textAlign: 'right' }}><button onClick={() => handleEdit(user)} style={neutralBtnStyle}>Sửa</button><button onClick={() => handleDelete(user.id)} style={dangerBtnStyle}>Xóa</button></td></tr>))}</tbody>
                 </table>
-              </div>
             </div>
           </div>
         )}
         {activeTab === 'courses' && <CourseManager />}
         {activeTab === 'lessons' && (
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-            <h2 style={{ margin: 0, color: '#0f172a', fontSize: '28px', marginBottom: '20px' }}>Quản Lý Bài Giảng</h2>
-            <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', marginBottom: '30px' }}>
-              <form onSubmit={handleAddLesson} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}><input style={{...inputStyle, width: '120px'}} type="number" placeholder="ID" required value={lessonForm.course_id} onChange={(e) => setLessonForm({...lessonForm, course_id: e.target.value})} /><input style={{...inputStyle, flex: 1, minWidth: '200px'}} type="text" placeholder="Tên bài giảng" required value={lessonForm.title} onChange={(e) => setLessonForm({...lessonForm, title: e.target.value})} /><input style={{...inputStyle, flex: 2, minWidth: '250px'}} type="url" placeholder="Link YouTube" required value={lessonForm.video_url} onChange={(e) => setLessonForm({...lessonForm, video_url: e.target.value})} /><button type="submit" style={successBtnStyle}>Thêm</button></form>
-            </div>
-            
-            {/* ĐÂY LÀ CÁI BẢNG MÀ MÌNH ĐÃ LỠ TAY XÓA MẤT! */}
-            <div style={{ backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                  <thead><tr style={{ backgroundColor: '#f8fafc', color: '#64748b', fontSize: '14px', textTransform: 'uppercase' }}><th style={{ padding: '20px', borderBottom: '2px solid #e2e8f0' }}>ID Bài</th><th style={{ padding: '20px', borderBottom: '2px solid #e2e8f0' }}>Khóa Học</th><th style={{ padding: '20px', borderBottom: '2px solid #e2e8f0' }}>Tiêu đề video</th><th style={{ padding: '20px', borderBottom: '2px solid #e2e8f0' }}>Mã YouTube ID</th></tr></thead>
-                  <tbody>
-                    {lessons.length === 0 ? (
-                      <tr><td colSpan="4" style={{ padding: '30px', textAlign: 'center', color: '#94a3b8' }}>Đang tải dữ liệu hoặc chưa có bài giảng nào...</td></tr>
-                    ) : (
-                      lessons.map((lesson) => (
-                        <tr key={lesson.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                          <td style={{ padding: '20px', color: '#64748b', fontWeight: 'bold' }}>#{lesson.id}</td><td style={{ padding: '20px', color: '#3b82f6', fontWeight: 'bold' }}>ID: {lesson.course_id}</td><td style={{ padding: '20px', color: '#0f172a' }}>{lesson.title}</td><td style={{ padding: '20px' }}><span style={{ backgroundColor: '#fef2f2', color: '#ef4444', padding: '6px 12px', borderRadius: '8px', fontSize: '14px', fontFamily: 'monospace' }}>{lesson.video_url}</span></td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            
+            <h2 style={{ marginBottom: '20px' }}>Quản Lý Bài Giảng</h2>
+            <form onSubmit={handleAddLesson} style={{ display: 'flex', gap: '15px', marginBottom: '30px' }}><input style={inputStyle} type="number" placeholder="ID Khóa học" required value={lessonForm.course_id} onChange={(e) => setLessonForm({...lessonForm, course_id: e.target.value})} /><input style={{...inputStyle, flex: 1}} type="text" placeholder="Tên bài giảng" required value={lessonForm.title} onChange={(e) => setLessonForm({...lessonForm, title: e.target.value})} /><input style={{...inputStyle, flex: 1}} type="url" placeholder="Link YouTube" required value={lessonForm.video_url} onChange={(e) => setLessonForm({...lessonForm, video_url: e.target.value})} /><button type="submit" style={successBtnStyle}>Thêm</button></form>
+            <table style={{ width: '100%', backgroundColor: 'white', borderRadius: '12px' }}>
+              <thead><tr style={{ textAlign: 'left' }}><th style={{ padding: '20px' }}>ID</th><th style={{ padding: '20px' }}>Tiêu đề</th><th style={{ padding: '20px' }}>YouTube ID</th></tr></thead>
+              <tbody>{lessons.map((lesson) => (<tr key={lesson.id}><td style={{ padding: '20px' }}>#{lesson.id}</td><td style={{ padding: '20px' }}>{lesson.title}</td><td style={{ padding: '20px' }}>{lesson.video_url}</td></tr>))}</tbody>
+            </table>
           </div>
         )}
+        {activeTab === 'learning' && <LearningRoom course={selectedCourse} currentUser={currentUser} onBack={() => setActiveTab('courses')} />}
       </div>
       <ToastContainer position="top-right" autoClose={3000} theme="colored" />
     </div>
@@ -297,7 +275,7 @@ const primaryBtnStyle = { padding: '14px', backgroundColor: '#3b82f6', color: 'w
 const successBtnStyle = { ...primaryBtnStyle, backgroundColor: '#10b981' };
 const warningBtnStyle = { ...primaryBtnStyle, backgroundColor: '#f59e0b' };
 const dangerBtnStyle = { ...primaryBtnStyle, backgroundColor: '#ef4444' };
-const neutralBtnStyle = { ...primaryBtnStyle, backgroundColor: 'white', color: '#334155', border: '1px solid #cbd5e1' };
+const neutralBtnStyle = { padding: '8px 16px', backgroundColor: 'white', color: '#334155', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', marginRight: '5px' };
 const menuItem = { padding: '16px 20px', cursor: 'pointer', borderRadius: '12px', color: '#cbd5e1', fontSize: '15px', fontWeight: '500' };
 const activeMenuItem = { ...menuItem, backgroundColor: '#3b82f6', color: 'white', fontWeight: 'bold' };
 
