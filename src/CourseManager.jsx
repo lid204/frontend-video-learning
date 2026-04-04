@@ -1,20 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 
 function CourseManager() {
   const [courses, setCourses] = useState([]);
-  
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     price: '',
-    thumbnail_url: '' 
+    thumbnail_url: ''
   });
 
-  const [imageFile, setImageFile] = useState(null); 
-  const [isUploading, setIsUploading] = useState(false); 
+  const [imageFile, setImageFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // ĐÃ SỬA THÀNH LINK VERCEL CHÍNH THỨC CỦA TEAM
   const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/courses";
@@ -51,15 +50,15 @@ function CourseManager() {
         const uploadRes = await axios.post(UPLOAD_URL, uploadData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        
-        finalImageUrl = uploadRes.data.imageUrl; 
+
+        finalImageUrl = uploadRes.data.imageUrl;
       }
 
       const courseData = { ...formData, thumbnail_url: finalImageUrl };
       await axios.post(API_URL, courseData);
-      
+
       alert("✅ Thêm khóa học thành công!");
-      
+
       setFormData({ title: '', description: '', price: '', thumbnail_url: '' });
       setImageFile(null);
       setIsUploading(false);
@@ -78,37 +77,37 @@ function CourseManager() {
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '40px' }}>
         <div style={{ display: 'flex', gap: '15px' }}>
-          <input 
+          <input
             type="text" placeholder="Tên khóa học..." required
             style={{ flex: 2, padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
-            value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} 
+            value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           />
-          <input 
+          <input
             type="number" placeholder="Giá tiền (VNĐ)..." required
             style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
-            value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} 
+            value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })}
           />
         </div>
 
         <div style={{ padding: '10px', border: '1px dashed #3b82f6', borderRadius: '6px', backgroundColor: '#eff6ff' }}>
           <label style={{ fontWeight: 'bold', marginRight: '10px' }}>🖼️ Ảnh bìa (Thumbnail):</label>
-          <input 
-            type="file" accept="image/*" 
-            onChange={(e) => setImageFile(e.target.files[0])} 
+          <input
+            type="file" accept="image/*"
+            onChange={(e) => setImageFile(e.target.files[0])}
           />
         </div>
 
         <div>
           <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>📝 Mô tả chi tiết:</label>
-          <ReactQuill 
-            theme="snow" 
-            value={formData.description} 
-            onChange={(value) => setFormData({...formData, description: value})} 
-            style={{ height: '150px', marginBottom: '40px' }} 
+          <ReactQuill
+            theme="snow"
+            value={formData.description}
+            onChange={(value) => setFormData({ ...formData, description: value })}
+            style={{ height: '150px', marginBottom: '40px' }}
           />
         </div>
 
-        <button 
+        <button
           type="submit" disabled={isUploading}
           style={{ padding: '12px', backgroundColor: isUploading ? '#94a3b8' : '#3b82f6', color: 'white', fontWeight: 'bold', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
         >
