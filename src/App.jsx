@@ -8,14 +8,18 @@ import HomePage from './HomePage';
 import CoursesPage from './CoursesPage';
 import CourseManager from './CourseManager';
 import LearningRoom from './LearningRoom';
+import CourseDetail from './CourseDetail';
 
 function App() {
   // === STATE QUẢN LÝ LUỒNG ĐI ===
   const [currentView, setCurrentView] = useState('home'); 
 
+  
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authMode, setAuthMode] = useState('login'); 
   const [currentUser, setCurrentUser] = useState(null);
+
+  const [viewingCourseId, setViewingCourseId] = useState(null);
 
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [registerForm, setRegisterForm] = useState({ name: '', email: '', phone: '', password: '' });
@@ -172,7 +176,20 @@ function App() {
   }
 
   if (currentView === 'courses') {
-    return <CoursesPage onBackToHome={() => setCurrentView('home')} />;
+    return <CoursesPage 
+      onBackToHome={() => setCurrentView('home')} 
+      onViewCourse={(id) => {
+        setViewingCourseId(id);
+        setCurrentView('courseDetail');
+      }}
+    />;
+  }
+
+  if (currentView === 'courseDetail') {
+    return <CourseDetail 
+      courseId={viewingCourseId} 
+      onBack={() => setCurrentView('courses')} 
+    />;
   }
 
   if (currentView === 'auth') {
@@ -208,6 +225,8 @@ function App() {
     );
   }
 
+
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
       <div style={{ width: '280px', backgroundColor: '#0f172a', color: 'white', display: 'flex', flexDirection: 'column', boxShadow: '4px 0 10px rgba(0,0,0,0.1)', zIndex: 10 }}>
@@ -233,6 +252,7 @@ function App() {
           <button onClick={handleLogout} style={{ ...dangerBtnStyle, width: '100%' }}>🚪 Đăng Xuất</button>
         </div>
       </div>
+
 
       <div style={{ flex: 1, padding: activeTab === 'learning' ? '0' : '40px', overflowY: 'auto' }}>
         {activeTab === 'users' && (

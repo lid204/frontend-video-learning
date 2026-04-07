@@ -5,7 +5,14 @@ import 'react-quill-new/dist/quill.snow.css';
 
 function CourseManager({ onGoToLearning }) { 
   const [courses, setCourses] = useState([]);
-  const [formData, setFormData] = useState({ title: '', description: '', price: '', thumbnail_url: '' });
+  const [formData, setFormData] = useState({ 
+    title: '', 
+    description: '', 
+    price: '', 
+    thumbnail_url: '',
+    category_id: '' 
+  });
+  const [categories, setCategories] = useState([]);
   const [imageFile, setImageFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [sections, setSections] = useState([]);
@@ -14,12 +21,22 @@ function CourseManager({ onGoToLearning }) {
   const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/courses";
   const UPLOAD_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/upload";
   const BASE_API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api";
+  const CATEGORY_API = "https://backend-video-learning-lid204s-projects.vercel.app/api/categories";
 
   const fetchCourses = async () => {
     try {
       const response = await axios.get(API_URL);
       setCourses(response.data);
     } catch (err) { console.error(err); }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get(CATEGORY_API);
+      setCategories(response.data);
+    } catch (error) {
+      console.error("Lỗi lấy danh mục", error);
+    }
   };
 
   const fetchCurriculum = async (course) => {
@@ -30,7 +47,10 @@ function CourseManager({ onGoToLearning }) {
     } catch (err) { console.error(err); }
   };
 
-  useEffect(() => { fetchCourses(); }, []);
+  useEffect(() => { 
+    fetchCourses(); 
+    fetchCategories();
+  }, []);
 
   const handleAddSection = async () => {
     const title = prompt("Nhập tên chương mới (VD: Chương 1: Cơ bản):");
@@ -83,12 +103,12 @@ function CourseManager({ onGoToLearning }) {
         const uploadRes = await axios.post(UPLOAD_URL, uploadData);
         finalImageUrl = uploadRes.data.imageUrl;
       }
-      // Gửi toàn bộ formData (bao gồm cả description)
       await axios.post(API_URL, { ...formData, thumbnail_url: finalImageUrl });
       alert("✅ Thêm khóa học thành công!");
-      setFormData({ title: '', description: '', price: '', thumbnail_url: '' });
-      setIsUploading(false);
+
+      setFormData({ title: '', description: '', price: '', thumbnail_url: '', category_id: '' });
       setImageFile(null);
+      setIsUploading(false);
       fetchCourses();
     } catch (err) { 
       setIsUploading(false);
@@ -101,29 +121,62 @@ function CourseManager({ onGoToLearning }) {
       <h2 style={{ color: '#0f172a', marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '10px' }}>📚 Quản Lý Khóa Học</h2>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '50px' }}>
         <div style={{ display: 'flex', gap: '15px' }}>
-          <input style={inputStyle} type="text" placeholder="Tên khóa học..." required value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} />
-          <input style={inputStyle} type="number" placeholder="Giá tiền (VND)..." required value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} />
+          <input
+            type="text" placeholder="Tên khóa học..." required
+            style={inputStyle}
+            value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          />
+          <select 
+            style={inputStyle} 
+            value={formData.category_id} 
+            onChange={(e) => setFormData({...formData, category_id: e.target.value})}
+            required
+          >
+            <option value="">-- Chọn danh mục --</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
+          <input
+            type="number" placeholder="Giá tiền (VNĐ)..." required
+            style={inputStyle}
+            value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+          />
         </div>
-        <div style={{ border: '2px dashed #cbd5e1', padding: '15px', borderRadius: '12px', textAlign: 'center' }}>
+
+        <div style={{ border: '2px dashed #cbd5e1', padding: '15px', borderRadius: '12px', textAlign: 'center', backgroundColor: '#eff6ff' }}>
           <label style={{ cursor: 'pointer', color: '#3b82f6', fontWeight: 'bold' }}>
             🖼️ {imageFile ? imageFile.name : "Nhấn để chọn Ảnh bìa (Thumbnail)"}
-            <input type="file" hidden onChange={(e) => setImageFile(e.target.files[0])} />
+            <input type="file" hidden accept="image/*" onChange={(e) => setImageFile(e.target.files[0])} />
           </label>
         </div>
+        
         <ReactQuill theme="snow" value={formData.description} onChange={(val) => setFormData({...formData, description: val})} style={{ height: '180px', marginBottom: '45px' }} />
+        
         <button type="submit" disabled={isUploading} style={{...primaryBtn, backgroundColor: isUploading ? '#64748b' : '#0f172a'}}>
           {isUploading ? '⏳ Đang lưu...' : '💾 Lưu Khóa Học'}
         </button>
       </form>
 
-      <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 10px' }}>
-        <thead><tr style={{ color: '#64748b', textAlign: 'left' }}><th>Ảnh</th><th>Tên khóa học</th><th style={{ textAlign: 'right' }}>Hành động</th></tr></thead>
+      <h3 style={{ color: '#334155' }}>📋 Danh sách đã tạo</h3>
+      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <thead>
+          <tr style={{ backgroundColor: '#f1f5f9' }}>
+            <th style={{ padding: '10px', borderBottom: '2px solid #cbd5e1' }}>Ảnh</th>
+            <th style={{ padding: '10px', borderBottom: '2px solid #cbd5e1' }}>Tên khóa học</th>
+            <th style={{ padding: '10px', borderBottom: '2px solid #cbd5e1' }}>Danh mục</th>
+            <th style={{ padding: '10px', borderBottom: '2px solid #cbd5e1' }}>Giá tiền</th>
+            <th style={{ padding: '10px', borderBottom: '2px solid #cbd5e1', textAlign: 'right' }}>Hành động</th>
+          </tr>
+        </thead>
         <tbody>
           {courses.map(course => (
-            <tr key={course.id} style={{ backgroundColor: '#f8fafc', borderRadius: '12px' }}>
-              <td style={{ padding: '15px' }}><img src={course.thumbnail_url} style={{ width: '70px', borderRadius: '8px' }} /></td>
-              <td style={{ fontWeight: 'bold', color: '#1e293b' }}>{course.title}</td>
-              <td style={{ textAlign: 'right', paddingRight: '15px' }}>
+            <tr key={course.id} style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+              <td style={{ padding: '10px' }}><img src={course.thumbnail_url} alt="thumbnail" style={{ width: '70px', borderRadius: '8px' }} /></td>
+              <td style={{ padding: '10px', fontWeight: 'bold', color: '#1e293b' }}>{course.title}</td>
+              <td style={{ padding: '10px' }}>{course.category_name || 'Chưa phân loại'}</td>
+              <td style={{ padding: '10px', color: '#10b981', fontWeight: 'bold' }}>{Number(course.price).toLocaleString('vi-VN')} đ</td>
+              <td style={{ textAlign: 'right', padding: '10px' }}>
                 <button onClick={() => fetchCurriculum(course)} style={infoBtn}>⚙️ Nội dung</button>
                 <button onClick={() => handleDeleteCourse(course.id)} style={dangerBtn}>❌ Xóa</button>
               </td>
@@ -163,6 +216,7 @@ function CourseManager({ onGoToLearning }) {
   );
 }
 
+// Giữ lại bộ style chuẩn ở cuối file để code luôn sạch đẹp
 const inputStyle = { flex: 1, padding: '14px', borderRadius: '12px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '15px' };
 const primaryBtn = { padding: '15px', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', fontSize: '16px' };
 const infoBtn = { padding: '8px 16px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginRight: '10px' };
