@@ -1,3 +1,4 @@
+import CurriculumAccordion from './components/CurriculumAccordion';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
