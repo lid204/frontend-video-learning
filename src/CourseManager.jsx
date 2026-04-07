@@ -21,9 +21,9 @@ function CourseManager() {
   const [isUploading, setIsUploading] = useState(false);
 
   // Fix lỗi số 3: Trỏ về Backend Local để test code vừa nâng cấp
-  const API_URL = "http://localhost:5000/api/courses";
-  const UPLOAD_URL = "http://localhost:5000/api/upload";
-  const CATEGORY_API = "http://localhost:5000/api/categories";
+  const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/courses";
+  const UPLOAD_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/upload";
+  const CATEGORY_API = "https://backend-video-learning-lid204s-projects.vercel.app/api/categories"; // Chú ý link này trỏ vào /api/categories nhé
 
   const fetchCourses = async () => {
     try {
