@@ -3,21 +3,27 @@ import axios from 'axios';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 
+// Fix lỗi số 2: Khai báo inputStyle cho file này
+const inputStyle = { padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', flex: 1 };
+
 function CourseManager() {
   const [courses, setCourses] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     price: '',
-    thumbnail_url: ''
+    thumbnail_url: '',
+    category_id: '' // Đảm bảo có category_id trong state ban đầu
   });
+  const [categories, setCategories] = useState([]);
 
   const [imageFile, setImageFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  // ĐÃ SỬA THÀNH LINK VERCEL CHÍNH THỨC CỦA TEAM
-  const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/courses";
-  const UPLOAD_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/upload";
+  // Fix lỗi số 3: Trỏ về Backend Local để test code vừa nâng cấp
+  const API_URL = "http://localhost:5000/api/courses";
+  const UPLOAD_URL = "http://localhost:5000/api/upload";
+  const CATEGORY_API = "http://localhost:5000/api/categories";
 
   const fetchCourses = async () => {
     try {
@@ -28,8 +34,19 @@ function CourseManager() {
     }
   };
 
+  // Fix lỗi số 1: Viết hàm lấy danh mục
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get(CATEGORY_API);
+      setCategories(response.data);
+    } catch (error) {
+      console.error("Lỗi lấy danh mục", error);
+    }
+  };
+
   useEffect(() => {
     fetchCourses();
+    fetchCategories();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -59,7 +76,7 @@ function CourseManager() {
 
       alert("✅ Thêm khóa học thành công!");
 
-      setFormData({ title: '', description: '', price: '', thumbnail_url: '' });
+      setFormData({ title: '', description: '', price: '', thumbnail_url: '', category_id: '' });
       setImageFile(null);
       setIsUploading(false);
       fetchCourses();
@@ -82,6 +99,17 @@ function CourseManager() {
             style={{ flex: 2, padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
             value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           />
+          <select 
+            style={inputStyle} 
+            value={formData.category_id} 
+            onChange={(e) => setFormData({...formData, category_id: e.target.value})}
+            required
+          >
+            <option value="">-- Chọn danh mục --</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
           <input
             type="number" placeholder="Giá tiền (VNĐ)..." required
             style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
@@ -121,6 +149,7 @@ function CourseManager() {
           <tr style={{ backgroundColor: '#f1f5f9' }}>
             <th style={{ padding: '10px', borderBottom: '2px solid #cbd5e1' }}>Ảnh</th>
             <th style={{ padding: '10px', borderBottom: '2px solid #cbd5e1' }}>Tên khóa học</th>
+            <th style={{ padding: '10px', borderBottom: '2px solid #cbd5e1' }}>Danh mục</th>
             <th style={{ padding: '10px', borderBottom: '2px solid #cbd5e1' }}>Giá tiền</th>
           </tr>
         </thead>
@@ -131,6 +160,7 @@ function CourseManager() {
                 <img src={course.thumbnail_url} alt="thumbnail" style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />
               </td>
               <td style={{ padding: '10px', fontWeight: 'bold' }}>{course.title}</td>
+              <td style={{ padding: '10px' }}>{course.category_name || 'Chưa phân loại'}</td>
               <td style={{ padding: '10px', color: '#10b981' }}>{Number(course.price).toLocaleString('vi-VN')} đ</td>
             </tr>
           ))}
