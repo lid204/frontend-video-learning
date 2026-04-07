@@ -144,6 +144,9 @@ function App() {
     }
   };
 
+  // --- HÀM MỚI ĐỂ CHUYỂN TAB (CHỈ THÊM DÒNG NÀY) ---
+  const goToLearning = (course) => { setSelectedCourse(course); setActiveTab('learning'); };
+
   // ================= ĐIỀU HƯỚNG MÀN HÌNH =================
 
   if (currentView === 'home') {
@@ -272,7 +275,7 @@ function App() {
             </div>
           </div>
         )}
-        {activeTab === 'courses' && <CourseManager />}
+        {activeTab === 'courses' && <CourseManager onGoToLearning={goToLearning} />}
         {activeTab === 'lessons' && (
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
             <h2 style={{ marginBottom: '20px' }}>Quản Lý Bài Giảng</h2>
