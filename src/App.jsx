@@ -30,16 +30,11 @@ function App() {
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // --- STATE CHO BÀI GIẢNG ---
-  const [lessons, setLessons] = useState([]);
-  const [lessonForm, setLessonForm] = useState({ course_id: 101, title: '', video_url: '' });
-
   // --- STATE PHÒNG HỌC ---
   const [selectedCourse, setSelectedCourse] = useState(null);
 
   // URL API CHÍNH THỨC
   const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/users";
-  const LESSON_API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/lessons";
 
   // ================= CÁC HÀM XỬ LÝ =================
   const handleLogin = async (e) => {
@@ -120,29 +115,6 @@ function App() {
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const fetchLessons = async () => {
-    try {
-      const response = await axios.get(`${LESSON_API_URL}/course/101`);
-      setLessons(response.data);
-    } catch (err) { console.error("Chưa có bài giảng", err); }
-  };
-
-  useEffect(() => {
-    if (activeTab === 'lessons') fetchLessons();
-  }, [activeTab]);
-
-  const handleAddLesson = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post(LESSON_API_URL, lessonForm);
-      alert(`✅ Thêm thành công!\nID YouTube: ${response.data.video_url}`);
-      setLessonForm({ ...lessonForm, title: '', video_url: '' });
-      fetchLessons();
-    } catch (err) {
-      alert("❌ Lỗi thêm bài giảng!");
-    }
-  };
 
   // --- HÀM MỚI ĐỂ CHUYỂN TAB ---
   const goToLearning = (course) => { setSelectedCourse(course); setActiveTab('learning'); };
@@ -241,7 +213,7 @@ function App() {
               <>
                 <li onClick={() => setActiveTab('analytics')} style={activeTab === 'analytics' ? analyticsMenuItem : menuItem}>📊 Analytics</li>
                 <li onClick={() => setActiveTab('courses')} style={activeTab === 'courses' ? activeMenuItem : menuItem}>📚 Khóa học</li>
-                <li onClick={() => setActiveTab('lessons')} style={activeTab === 'lessons' ? activeMenuItem : menuItem}>🎬 Bài giảng</li>
+                {/* Đã xóa tab Bài giảng ở đây */}
                 <li onClick={() => { setSelectedCourse({ id: 101, title: 'Lập trình ReactJS cho Gen Z' }); setActiveTab('learning'); }} style={activeTab === 'learning' ? activeMenuItem : menuItem}>🎓 Phòng Học</li>
               </>
             )}
@@ -252,7 +224,6 @@ function App() {
         </div>
       </div>
 
-      {/* Đã gộp logic Padding của Phong và main */}
       <div style={{ flex: 1, padding: (activeTab === 'learning' || activeTab === 'analytics') ? '0' : '40px', overflowY: 'auto' }}>
         {activeTab === 'users' && (
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -275,16 +246,9 @@ function App() {
           </div>
         )}
         {activeTab === 'courses' && <CourseManager onGoToLearning={goToLearning} />}
-        {activeTab === 'lessons' && (
-          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-            <h2 style={{ marginBottom: '20px' }}>Quản Lý Bài Giảng</h2>
-            <form onSubmit={handleAddLesson} style={{ display: 'flex', gap: '15px', marginBottom: '30px' }}><input style={inputStyle} type="number" placeholder="ID Khóa học" required value={lessonForm.course_id} onChange={(e) => setLessonForm({...lessonForm, course_id: e.target.value})} /><input style={{...inputStyle, flex: 1}} type="text" placeholder="Tên bài giảng" required value={lessonForm.title} onChange={(e) => setLessonForm({...lessonForm, title: e.target.value})} /><input style={{...inputStyle, flex: 1}} type="url" placeholder="Link YouTube" required value={lessonForm.video_url} onChange={(e) => setLessonForm({...lessonForm, video_url: e.target.value})} /><button type="submit" style={successBtnStyle}>Thêm</button></form>
-            <table style={{ width: '100%', backgroundColor: 'white', borderRadius: '12px' }}>
-              <thead><tr style={{ textAlign: 'left' }}><th style={{ padding: '20px' }}>ID</th><th style={{ padding: '20px' }}>Tiêu đề</th><th style={{ padding: '20px' }}>YouTube ID</th></tr></thead>
-              <tbody>{lessons.map((lesson) => (<tr key={lesson.id}><td style={{ padding: '20px' }}>#{lesson.id}</td><td style={{ padding: '20px' }}>{lesson.title}</td><td style={{ padding: '20px' }}>{lesson.video_url}</td></tr>))}</tbody>
-            </table>
-          </div>
-        )}
+        
+        {/* Đã gỡ bỏ toàn bộ code render của tab bài giảng cũ */}
+
         {activeTab === 'analytics' && <AdminDashboard />}
         {activeTab === 'learning' && <LearningRoom course={selectedCourse} currentUser={currentUser} onBack={() => setActiveTab('courses')} />}
       </div>
