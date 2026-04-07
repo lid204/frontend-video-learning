@@ -8,13 +8,13 @@ import HomePage from './HomePage';
 import CoursesPage from './CoursesPage';
 import CourseManager from './CourseManager';
 import LearningRoom from './LearningRoom';
-import CourseDetail from './CourseDetail';
+import CourseDetail from './CourseDetail'; // Của nhánh main
+import AdminDashboard from './AdminDashboard'; // Của nhánh Phong
 
 function App() {
   // === STATE QUẢN LÝ LUỒNG ĐI ===
   const [currentView, setCurrentView] = useState('home'); 
 
-  
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authMode, setAuthMode] = useState('login'); 
   const [currentUser, setCurrentUser] = useState(null);
@@ -144,7 +144,7 @@ function App() {
     }
   };
 
-  // --- HÀM MỚI ĐỂ CHUYỂN TAB (CHỈ THÊM DÒNG NÀY) ---
+  // --- HÀM MỚI ĐỂ CHUYỂN TAB ---
   const goToLearning = (course) => { setSelectedCourse(course); setActiveTab('learning'); };
 
   // ================= ĐIỀU HƯỚNG MÀN HÌNH =================
@@ -225,8 +225,6 @@ function App() {
     );
   }
 
-
-
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
       <div style={{ width: '280px', backgroundColor: '#0f172a', color: 'white', display: 'flex', flexDirection: 'column', boxShadow: '4px 0 10px rgba(0,0,0,0.1)', zIndex: 10 }}>
@@ -241,6 +239,7 @@ function App() {
             {currentUser?.role === 'admin' && <li onClick={() => setActiveTab('users')} style={activeTab === 'users' ? activeMenuItem : menuItem}>👥 Người dùng</li>}
             {(currentUser?.role === 'admin' || currentUser?.role === 'teacher') && (
               <>
+                <li onClick={() => setActiveTab('analytics')} style={activeTab === 'analytics' ? analyticsMenuItem : menuItem}>📊 Analytics</li>
                 <li onClick={() => setActiveTab('courses')} style={activeTab === 'courses' ? activeMenuItem : menuItem}>📚 Khóa học</li>
                 <li onClick={() => setActiveTab('lessons')} style={activeTab === 'lessons' ? activeMenuItem : menuItem}>🎬 Bài giảng</li>
                 <li onClick={() => { setSelectedCourse({ id: 101, title: 'Lập trình ReactJS cho Gen Z' }); setActiveTab('learning'); }} style={activeTab === 'learning' ? activeMenuItem : menuItem}>🎓 Phòng Học</li>
@@ -253,8 +252,8 @@ function App() {
         </div>
       </div>
 
-
-      <div style={{ flex: 1, padding: activeTab === 'learning' ? '0' : '40px', overflowY: 'auto' }}>
+      {/* Đã gộp logic Padding của Phong và main */}
+      <div style={{ flex: 1, padding: (activeTab === 'learning' || activeTab === 'analytics') ? '0' : '40px', overflowY: 'auto' }}>
         {activeTab === 'users' && (
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
             <h2 style={{ color: '#0f172a', fontSize: '28px', marginBottom: '30px' }}>Quản Lý Người Dùng</h2>
@@ -286,6 +285,7 @@ function App() {
             </table>
           </div>
         )}
+        {activeTab === 'analytics' && <AdminDashboard />}
         {activeTab === 'learning' && <LearningRoom course={selectedCourse} currentUser={currentUser} onBack={() => setActiveTab('courses')} />}
       </div>
       <ToastContainer position="top-right" autoClose={3000} theme="colored" />
@@ -301,5 +301,6 @@ const dangerBtnStyle = { ...primaryBtnStyle, backgroundColor: '#ef4444' };
 const neutralBtnStyle = { padding: '8px 16px', backgroundColor: 'white', color: '#334155', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', marginRight: '5px' };
 const menuItem = { padding: '16px 20px', cursor: 'pointer', borderRadius: '12px', color: '#cbd5e1', fontSize: '15px', fontWeight: '500' };
 const activeMenuItem = { ...menuItem, backgroundColor: '#3b82f6', color: 'white', fontWeight: 'bold' };
+const analyticsMenuItem = { ...menuItem, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', fontWeight: 'bold' };
 
 export default App;
