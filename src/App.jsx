@@ -8,7 +8,8 @@ import HomePage from './HomePage';
 import CoursesPage from './CoursesPage';
 import CourseManager from './CourseManager';
 import LearningRoom from './LearningRoom';
-import AdminDashboard from './AdminDashboard';
+import CourseDetail from './CourseDetail'; // Của nhánh main
+import AdminDashboard from './AdminDashboard'; // Của nhánh Phong
 
 function App() {
   // === STATE QUẢN LÝ LUỒNG ĐI ===
@@ -17,6 +18,8 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authMode, setAuthMode] = useState('login'); 
   const [currentUser, setCurrentUser] = useState(null);
+
+  const [viewingCourseId, setViewingCourseId] = useState(null);
 
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [registerForm, setRegisterForm] = useState({ name: '', email: '', phone: '', password: '' });
@@ -141,6 +144,9 @@ function App() {
     }
   };
 
+  // --- HÀM MỚI ĐỂ CHUYỂN TAB ---
+  const goToLearning = (course) => { setSelectedCourse(course); setActiveTab('learning'); };
+
   // ================= ĐIỀU HƯỚNG MÀN HÌNH =================
 
   if (currentView === 'home') {
@@ -170,7 +176,20 @@ function App() {
   }
 
   if (currentView === 'courses') {
-    return <CoursesPage onBackToHome={() => setCurrentView('home')} />;
+    return <CoursesPage 
+      onBackToHome={() => setCurrentView('home')} 
+      onViewCourse={(id) => {
+        setViewingCourseId(id);
+        setCurrentView('courseDetail');
+      }}
+    />;
+  }
+
+  if (currentView === 'courseDetail') {
+    return <CourseDetail 
+      courseId={viewingCourseId} 
+      onBack={() => setCurrentView('courses')} 
+    />;
   }
 
   if (currentView === 'auth') {
@@ -233,6 +252,7 @@ function App() {
         </div>
       </div>
 
+      {/* Đã gộp logic Padding của Phong và main */}
       <div style={{ flex: 1, padding: (activeTab === 'learning' || activeTab === 'analytics') ? '0' : '40px', overflowY: 'auto' }}>
         {activeTab === 'users' && (
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -254,7 +274,7 @@ function App() {
             </div>
           </div>
         )}
-        {activeTab === 'courses' && <CourseManager />}
+        {activeTab === 'courses' && <CourseManager onGoToLearning={goToLearning} />}
         {activeTab === 'lessons' && (
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
             <h2 style={{ marginBottom: '20px' }}>Quản Lý Bài Giảng</h2>
