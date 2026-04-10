@@ -1,31 +1,37 @@
-import CurriculumAccordion from './components/CurriculumAccordion';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-function CoursesPage({ onBackToHome }) { // Nhận lệnh Quay về nhà từ App.jsx
+function CoursesPage({ onBackToHome, onViewCourse }) { 
   const [courses, setCourses] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('Tất cả');
+  
+  const [categories, setCategories] = useState([]);
+  const [activeCategoryId, setActiveCategoryId] = useState(null); 
 
   const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api";
-  const categories = ['Tất cả', 'Lập trình Web', 'Thiết kế UI/UX', 'Lập trình Mobile', 'Marketing', 'AI & Data'];
 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await axios.get(`${API_URL}/courses`);
-        setCourses(response.data);
+        const [courseRes, catRes] = await Promise.all([
+          axios.get(`${API_URL}/courses`),
+          axios.get(`${API_URL}/categories`)
+        ]);
+        setCourses(courseRes.data);
+        setCategories([{ id: null, name: 'Tất cả' }, ...catRes.data]);
       } catch (err) { console.error("Lỗi:", err); }
     };
     fetchCourses();
   }, []);
 
   const filteredCourses = courses.filter(course => {
-    return course.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchCategory = activeCategoryId === null || course.category_id === activeCategoryId;
+    return matchSearch && matchCategory;
   });
 
   const stripHtmlTags = (text) => {
-    if (!text) return 'Chưa có mô tả cho khóa học này.';
+    if (!text) return 'Chưa có mô tả.';
     return text.replace(/<[^>]+>/g, ''); 
   };
 
@@ -39,36 +45,41 @@ function CoursesPage({ onBackToHome }) { // Nhận lệnh Quay về nhà từ Ap
         .cat-btn.active { background-color: #3b82f6; color: white; border-color: #3b82f6; }
       `}</style>
 
-      {/* NÚT QUAY LẠI */}
       <nav style={{ padding: '20px 40px', backgroundColor: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', position: 'sticky', top: 0, zIndex: 100, display: 'flex', alignItems: 'center', gap: '20px' }}>
-        <button onClick={onBackToHome} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px' }}>
-          &larr; Trang Chủ
-        </button>
+        <button onClick={onBackToHome} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px' }}>&larr; Trang Chủ</button>
         <div style={{ fontSize: '20px', fontWeight: '900', color: '#0f172a' }}>Khám Phá Khóa Học 📚</div>
       </nav>
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px', display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
-        
-        {/* CỘT TÌM KIẾM BÊN TRÁI */}
         <div style={{ width: '100%', maxWidth: '250px', backgroundColor: 'white', padding: '20px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
           <h3 style={{ marginTop: 0, color: '#0f172a', marginBottom: '20px' }}>Tìm kiếm</h3>
           <input type="text" placeholder="Tên khóa học..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ width: '100%', padding: '12px', border: '1px solid #cbd5e1', borderRadius: '8px', marginBottom: '30px', outline: 'none', boxSizing: 'border-box' }} />
+          
           <h3 style={{ color: '#0f172a', marginBottom: '15px' }}>Danh mục</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {categories.map((cat, idx) => (
-              <button key={idx} className={`cat-btn ${activeCategory === cat ? 'active' : ''}`} onClick={() => setActiveCategory(cat)} style={{ textAlign: 'left', padding: '10px 15px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: activeCategory === cat ? '#3b82f6' : 'transparent', color: activeCategory === cat ? 'white' : '#475569', cursor: 'pointer', fontWeight: 'bold' }}>
-                {cat}
+            {categories.map((cat) => (
+              <button 
+                key={cat.id || 'all'} 
+                className={`cat-btn ${activeCategoryId === cat.id ? 'active' : ''}`} 
+                onClick={() => setActiveCategoryId(cat.id)} 
+                style={{ textAlign: 'left', padding: '10px 15px', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: activeCategoryId === cat.id ? '#3b82f6' : 'transparent', color: activeCategoryId === cat.id ? 'white' : '#475569', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                {cat.name}
               </button>
             ))}
           </div>
         </div>
 
-        {/* LƯỚI KHÓA HỌC BÊN PHẢI */}
         <div style={{ flex: 1 }}>
           <div style={{ marginBottom: '20px', color: '#64748b' }}>Đang hiển thị <b style={{ color: '#0f172a' }}>{filteredCourses.length}</b> khóa học</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '25px' }}>
             {filteredCourses.map(course => (
-              <div key={course.id} className="course-card" style={{ backgroundColor: 'white', borderRadius: '16px', overflow: 'hidden', border: '1px solid #e2e8f0', cursor: 'pointer', display: 'flex', flexDirection: 'column' }}>
+              <div 
+                key={course.id} 
+                onClick={() => onViewCourse(course.id)} /* 👇 CÔNG TẮC CHUYỂN TRANG Ở ĐÂY */
+                className="course-card" 
+                style={{ backgroundColor: 'white', borderRadius: '16px', overflow: 'hidden', border: '1px solid #e2e8f0', cursor: 'pointer', display: 'flex', flexDirection: 'column' }}
+              >
                 <div style={{ position: 'relative', width: '100%', height: '160px', backgroundColor: '#e2e8f0' }}>
                   <img src={course.thumbnail_url} alt={course.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/600x400/cbd5e1/475569?text=No+Image'; }} />
                 </div>
@@ -83,7 +94,6 @@ function CoursesPage({ onBackToHome }) { // Nhận lệnh Quay về nhà từ Ap
             ))}
           </div>
         </div>
-
       </div>
     </div>
   );

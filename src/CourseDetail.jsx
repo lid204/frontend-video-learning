@@ -8,7 +8,7 @@ const CourseDetail = ({ courseId, onBack }) => {
   useEffect(() => {
     const fetchCourseDetail = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/courses/${courseId}`);
+        const response = await axios.get(`https://backend-video-learning-lid204s-projects.vercel.app/api/courses/${courseId}`);
         setCourse(response.data);
         setLoading(false);
       } catch (error) {

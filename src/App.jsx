@@ -3,22 +3,18 @@ import axios from 'axios';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Import các trang giao diện của team
 import HomePage from './HomePage';
 import CoursesPage from './CoursesPage';
 import CourseManager from './CourseManager';
 import LearningRoom from './LearningRoom';
-import CourseDetail from './CourseDetail'; // Của nhánh main
-import AdminDashboard from './AdminDashboard'; // Của nhánh Phong
+import CourseDetail from './CourseDetail'; 
+import AdminDashboard from './AdminDashboard'; 
 
 function App() {
-  // === STATE QUẢN LÝ LUỒNG ĐI ===
   const [currentView, setCurrentView] = useState('home'); 
-
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authMode, setAuthMode] = useState('login'); 
   const [currentUser, setCurrentUser] = useState(null);
-
   const [viewingCourseId, setViewingCourseId] = useState(null);
 
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
@@ -30,13 +26,10 @@ function App() {
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // --- STATE PHÒNG HỌC ---
   const [selectedCourse, setSelectedCourse] = useState(null);
 
-  // URL API CHÍNH THỨC
   const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/users";
 
-  // ================= CÁC HÀM XỬ LÝ =================
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -116,7 +109,6 @@ function App() {
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // --- HÀM MỚI ĐỂ CHUYỂN TAB ---
   const goToLearning = (course) => { setSelectedCourse(course); setActiveTab('learning'); };
 
   // ================= ĐIỀU HƯỚNG MÀN HÌNH =================
@@ -130,6 +122,11 @@ function App() {
           isLoggedIn={isLoggedIn}
           currentUser={currentUser}
           onLogoutClick={handleLogout}
+          // 👇 Gắn công tắc onViewCourse tại đây
+          onViewCourse={(id) => {
+            setViewingCourseId(id);
+            setCurrentView('courseDetail');
+          }}
         />
         
         {isLoggedIn && (currentUser?.role === 'admin' || currentUser?.role === 'teacher') && (
@@ -213,7 +210,6 @@ function App() {
               <>
                 <li onClick={() => setActiveTab('analytics')} style={activeTab === 'analytics' ? analyticsMenuItem : menuItem}>📊 Analytics</li>
                 <li onClick={() => setActiveTab('courses')} style={activeTab === 'courses' ? activeMenuItem : menuItem}>📚 Khóa học</li>
-                {/* Đã xóa tab Bài giảng ở đây */}
                 <li onClick={() => { setSelectedCourse({ id: 101, title: 'Lập trình ReactJS cho Gen Z' }); setActiveTab('learning'); }} style={activeTab === 'learning' ? activeMenuItem : menuItem}>🎓 Phòng Học</li>
               </>
             )}
@@ -246,9 +242,6 @@ function App() {
           </div>
         )}
         {activeTab === 'courses' && <CourseManager onGoToLearning={goToLearning} />}
-        
-        {/* Đã gỡ bỏ toàn bộ code render của tab bài giảng cũ */}
-
         {activeTab === 'analytics' && <AdminDashboard />}
         {activeTab === 'learning' && <LearningRoom course={selectedCourse} currentUser={currentUser} onBack={() => setActiveTab('courses')} />}
       </div>

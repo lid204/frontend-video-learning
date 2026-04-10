@@ -18,6 +18,7 @@ function CourseManager({ onGoToLearning }) {
   const [sections, setSections] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
 
+  // ĐÃ SỬA LẠI THÀNH LOCALHOST ĐỂ KHÔNG BỊ LỖI CORS
   const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/courses";
   const UPLOAD_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/upload";
   const BASE_API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api";
@@ -119,6 +120,28 @@ function CourseManager({ onGoToLearning }) {
   return (
     <div style={{ padding: '30px', backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
       <h2 style={{ color: '#0f172a', marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '10px' }}>📚 Quản Lý Khóa Học</h2>
+      
+      {/* ================= COMPONENT THÊM DANH MỤC CỦA DUY ================= */}
+      <div style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '30px' }}>
+        <h3 style={{ margin: '0 0 15px 0', color: '#0f172a', fontSize: '16px' }}>🏷️ Thêm Danh Mục Mới</h3>
+        <form 
+          onSubmit={async (e) => {
+            e.preventDefault();
+            try {
+              await axios.post(CATEGORY_API, { name: e.target.catName.value });
+              alert("✅ Đã thêm danh mục thành công!");
+              e.target.reset(); // Xóa trắng ô input
+              fetchCategories(); // Gọi hàm của Danh để update ngay lập tức vào thẻ <select> bên dưới
+            } catch (err) { alert("❌ Lỗi khi thêm danh mục!"); }
+          }} 
+          style={{ display: 'flex', gap: '10px' }}
+        >
+          <input name="catName" type="text" placeholder="Nhập tên danh mục (VD: Lập trình Web)..." required style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} />
+          <button type="submit" style={{ padding: '12px 20px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>+ Thêm Danh Mục</button>
+        </form>
+      </div>
+      {/* ================= KẾT THÚC COMPONENT CỦA DUY ================= */}
+
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '50px' }}>
         <div style={{ display: 'flex', gap: '15px' }}>
           <input
