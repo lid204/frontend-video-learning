@@ -3,18 +3,24 @@ import axios from 'axios';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Import các trang giao diện của team
 import HomePage from './HomePage';
 import CoursesPage from './CoursesPage';
 import CourseManager from './CourseManager';
 import LearningRoom from './LearningRoom';
-import CourseDetail from './CourseDetail'; 
-import AdminDashboard from './AdminDashboard'; 
-
+import CourseDetail from './CourseDetail'; // Đã lấy lại của Danh
+import AdminDashboard from './AdminDashboard'; // Đã lấy lại của Phong
+import Cart from './cart'; 
+import Payment from './Payment';
 function App() {
+  // === STATE QUẢN LÝ LUỒNG ĐI ===
   const [currentView, setCurrentView] = useState('home'); 
+  const [cart, setCart] = useState([]); // State Giỏ hàng
+  const [checkoutTotal, setCheckoutTotal] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authMode, setAuthMode] = useState('login'); 
   const [currentUser, setCurrentUser] = useState(null);
+
   const [viewingCourseId, setViewingCourseId] = useState(null);
 
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
@@ -26,10 +32,13 @@ function App() {
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // --- STATE PHÒNG HỌC ---
   const [selectedCourse, setSelectedCourse] = useState(null);
 
+  // URL API CHÍNH THỨC
   const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/users";
 
+  // ================= CÁC HÀM XỬ LÝ =================
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -111,6 +120,21 @@ function App() {
 
   const goToLearning = (course) => { setSelectedCourse(course); setActiveTab('learning'); };
 
+  // --- HÀM XỬ LÝ GIỎ HÀNG CỦA TƯ LỆNH ---
+  const handleAddToCart = (course) => {
+    const isExist = cart.find(item => item.id === course.id);
+    if (isExist) {
+      alert("⚠️ Khóa học này đã có trong giỏ hàng!");
+    } else {
+      setCart([...cart, course]);
+      alert("✅ Đã thêm vào giỏ hàng!");
+    }
+  };
+
+  const handleRemoveFromCart = (id) => {
+    setCart(cart.filter(item => item.id !== id));
+  };
+
   // ================= ĐIỀU HƯỚNG MÀN HÌNH =================
 
   if (currentView === 'home') {
@@ -122,11 +146,6 @@ function App() {
           isLoggedIn={isLoggedIn}
           currentUser={currentUser}
           onLogoutClick={handleLogout}
-          // 👇 Gắn công tắc onViewCourse tại đây
-          onViewCourse={(id) => {
-            setViewingCourseId(id);
-            setCurrentView('courseDetail');
-          }}
         />
         
         {isLoggedIn && (currentUser?.role === 'admin' || currentUser?.role === 'teacher') && (
@@ -154,10 +173,39 @@ function App() {
     />;
   }
 
+  // TRANG CHI TIẾT CÓ TRUYỀN HÀM THÊM GIỎ HÀNG
   if (currentView === 'courseDetail') {
     return <CourseDetail 
       courseId={viewingCourseId} 
       onBack={() => setCurrentView('courses')} 
+      onAddToCart={handleAddToCart}
+    />;
+  }
+
+  // TRANG GIỎ HÀNG CỦA TƯ LỆNH
+  if (currentView === 'cart') {
+    return <Cart 
+      cartItems={cart} 
+      onRemoveItem={handleRemoveFromCart}
+      // Sửa lại dòng này
+      onCheckout={() => {
+        const total = cart.reduce((sum, item) => sum + Number(item.price), 0);
+        if(total === 0) return alert("Giỏ hàng đang trống!");
+        setCheckoutTotal(total);
+        setCurrentView('payment');
+      }}
+      onBack={() => setCurrentView('courses')}
+    />;
+  }
+  if (currentView === 'payment') {
+    return <Payment 
+      totalAmount={checkoutTotal}
+      onCancel={() => setCurrentView('cart')}
+      onPaymentSuccess={() => {
+        alert("🎉 Ting ting! Giao dịch thành công. Chào mừng bạn đến với khóa học!");
+        setCart([]); // Reset giỏ hàng về 0
+        setCurrentView('courses'); // Đẩy người dùng về lại trang khóa học
+      }}
     />;
   }
 
@@ -245,6 +293,17 @@ function App() {
         {activeTab === 'analytics' && <AdminDashboard />}
         {activeTab === 'learning' && <LearningRoom course={selectedCourse} currentUser={currentUser} onBack={() => setActiveTab('courses')} />}
       </div>
+      
+      {/* Nút Giỏ hàng lơ lửng góc phải */}
+      {isLoggedIn && currentView !== 'cart' && currentView !== 'dashboard' && (
+        <button 
+          onClick={() => setCurrentView('cart')}
+          style={{ position: 'fixed', bottom: '30px', right: currentUser?.role === 'student' ? '30px' : '220px', padding: '15px 25px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '50px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 1000 }}
+        >
+          🛒 Giỏ hàng ({cart.length})
+        </button>
+      )}
+
       <ToastContainer position="top-right" autoClose={3000} theme="colored" />
     </div>
   );
