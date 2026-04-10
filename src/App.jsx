@@ -28,7 +28,7 @@ function App() {
 
   const [selectedCourse, setSelectedCourse] = useState(null);
 
-  const API_URL = "http://localhost:5000/api/users";
+  const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/users";
 
   const handleLogin = async (e) => {
     e.preventDefault();

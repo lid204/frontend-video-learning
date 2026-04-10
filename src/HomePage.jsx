@@ -18,7 +18,7 @@ function HomePage({ onLoginClick, onViewCoursesClick, isLoggedIn, currentUser, o
   const [courseCurriculum, setCourseCurriculum] = useState([]);
   const detailRef = useRef(null); 
 
-  const API_URL = "http://localhost:5000/api";
+  const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api";
 
   useEffect(() => {
     const fetchData = async () => {

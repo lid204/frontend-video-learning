@@ -19,10 +19,10 @@ function CourseManager({ onGoToLearning }) {
   const [selectedCourse, setSelectedCourse] = useState(null);
 
   // ĐÃ SỬA LẠI THÀNH LOCALHOST ĐỂ KHÔNG BỊ LỖI CORS
-  const API_URL = "http://localhost:5000/api/courses";
-  const UPLOAD_URL = "http://localhost:5000/api/upload";
-  const BASE_API_URL = "http://localhost:5000/api";
-  const CATEGORY_API = "http://localhost:5000/api/categories";
+  const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/courses";
+  const UPLOAD_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/upload";
+  const BASE_API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api";
+  const CATEGORY_API = "https://backend-video-learning-lid204s-projects.vercel.app/api/categories";
 
   const fetchCourses = async () => {
     try {

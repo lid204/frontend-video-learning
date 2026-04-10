@@ -8,7 +8,7 @@ function CoursesPage({ onBackToHome, onViewCourse }) {
   const [categories, setCategories] = useState([]);
   const [activeCategoryId, setActiveCategoryId] = useState(null); 
 
-  const API_URL = "http://localhost:5000/api";
+  const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api";
 
   useEffect(() => {
     const fetchCourses = async () => {
