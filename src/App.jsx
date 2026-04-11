@@ -307,6 +307,11 @@ function App() {
           
           // 👇 BỔ SUNG ĐOẠN NÀY ĐỂ KẾT NỐI VỚI NÚT ĐĂNG KÝ 👇
           onAddToCart={(courseData) => {
+            if (!isLoggedIn || !currentUser) {
+              alert("⚠️ Vui lòng Đăng nhập hoặc Đăng ký để thêm khóa học vào giỏ!");
+              setCurrentView('auth'); // Đá sang màn hình Login
+              return; // Dừng lại, không cho chạy code thêm vào giỏ bên dưới
+            }
             // Kiểm tra xem khóa học đã có trong giỏ chưa
             const isAlreadyInCart = cartItems.some(item => item.id === courseData.id);
             if (!isAlreadyInCart) {
@@ -328,7 +333,7 @@ function App() {
         <Payment 
           currentUser={currentUser}
           cartItems={cartItems}     
-          totalAmount={cartItems.reduce((sum, item) => sum + item.price, 0)}
+          totalAmount={cartItems.reduce((sum, item) => sum + parseInt(Number(item.price) || 0, 10), 0)}
           onPaymentSuccess={() => {
             alert("Thanh toán thành công!");
             setCartItems([]); 
