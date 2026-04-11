@@ -295,11 +295,24 @@ function App() {
   if (currentView === 'courseDetail') {
     return (
       <>
-        <CourseDetail
-          courseId={viewingCourseId}
-          onBack={() => setCurrentView('courses')}
+        <CourseDetail 
+          courseId={viewingCourseId} 
+          onBack={() => setCurrentView('courses')} 
+          
+          // 👇 BỔ SUNG ĐOẠN NÀY ĐỂ KẾT NỐI VỚI NÚT ĐĂNG KÝ 👇
+          onAddToCart={(courseData) => {
+            // Kiểm tra xem khóa học đã có trong giỏ chưa
+            const isAlreadyInCart = cartItems.some(item => item.id === courseData.id);
+            if (!isAlreadyInCart) {
+              setCartItems([...cartItems, courseData]); // Thêm vào giỏ
+            }
+            setIsCartOpen(true); // Tự động bật popup Giỏ hàng lên
+          }}
+          // 👆 KẾT THÚC ĐOẠN BỔ SUNG 👆
+
         />
         {toastNode}
+        {cartNode}
       </>
     );
   }
