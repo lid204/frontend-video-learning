@@ -9,6 +9,8 @@ import CourseManager from './CourseManager';
 import LearningRoom from './LearningRoom';
 import CourseDetail from './CourseDetail';
 import AdminDashboard from './AdminDashboard';
+import Cart from './cart'; 
+import Payment from './Payment'; 
 import API_BASE_URL from './config/api';
 
 function App() {
@@ -20,7 +22,8 @@ function App() {
   const [viewingCourseId, setViewingCourseId] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [courseSearchKeyword, setCourseSearchKeyword] = useState('');
-
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [cartItems, setCartItems] = useState([]); 
   const [activeTab, setActiveTab] = useState('users');
   const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState({
@@ -207,6 +210,28 @@ function App() {
     <ToastContainer position="top-right" autoClose={3000} theme="colored" />
   );
 
+
+  const cartNode = (
+    <>
+      <button 
+        onClick={() => setIsCartOpen(true)}
+        style={{ position: 'fixed', bottom: '20px', right: '20px', padding: '15px', borderRadius: '50%', backgroundColor: '#10b981', color: 'white', border: 'none', cursor: 'pointer', fontSize: '20px', zIndex: 1000, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+      >
+        🛒 ({cartItems.length})
+      </button>
+      {isCartOpen && (
+        <Cart 
+          cartItems={cartItems} 
+          onClose={() => setIsCartOpen(false)} 
+          onCheckout={() => {
+            setIsCartOpen(false); // Đóng giỏ hàng
+            setCurrentView('payment'); // Chuyển sang trang thanh toán
+          }} 
+        />
+      )}
+    </>
+  );
+
   if (currentView === 'home') {
     return (
       <>
@@ -247,7 +272,7 @@ function App() {
             ⚙️ Quản Lý Hệ Thống
           </button>
         )}
-
+        {cartNode}
         {toastNode}
       </>
     );
@@ -261,6 +286,7 @@ function App() {
           onViewCourse={handleOpenCourseDetail}
           initialSearchQuery={courseSearchKeyword}
         />
+        {cartNode}
         {toastNode}
       </>
     );
@@ -277,6 +303,23 @@ function App() {
       </>
     );
   }
+  if (currentView === 'payment') {
+    return (
+      <>
+        <Payment 
+          totalAmount={cartItems.reduce((sum, item) => sum + item.price, 0)}
+          onPaymentSuccess={() => {
+            alert("Thanh toán thành công!");
+            setCartItems([]); 
+            setCurrentView('home');
+          }}
+          onCancel={() => setCurrentView('home')}
+        />
+        {toastNode}
+      </>
+    );
+  }
+  
 
   if (currentView === 'auth') {
     return (
