@@ -17,7 +17,6 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authMode, setAuthMode] = useState('login');
   const [currentUser, setCurrentUser] = useState(null);
-
   const [viewingCourseId, setViewingCourseId] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [courseSearchKeyword, setCourseSearchKeyword] = useState('');
@@ -219,6 +218,11 @@ function App() {
           isLoggedIn={isLoggedIn}
           currentUser={currentUser}
           onLogoutClick={handleLogout}
+          // 👇 Gắn công tắc onViewCourse tại đây
+          onViewCourse={(id) => {
+            setViewingCourseId(id);
+            setCurrentView('courseDetail');
+          }}
         />
 
         {canManage && (
@@ -591,7 +595,6 @@ function App() {
             </button>
           </div>
         </div>
-
         <div
           style={{
             flex: 1,

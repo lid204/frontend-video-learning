@@ -1,0 +1,6 @@
+Fixed merge/conflict cleanup:
+- Removed conflict markers in src/*.jsx
+- Kept API config via src/config/api.js
+- Kept LearningSpace-based video logic
+- Removed package-lock.json so you can run npm install cleanly
+- Removed .git and node_modules from deliverable

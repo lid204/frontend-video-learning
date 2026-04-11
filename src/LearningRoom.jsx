@@ -59,64 +59,26 @@ function LearningRoom({ course, currentUser, onBack }) {
   }, [courseId]);
 
   const fetchCurriculum = async () => {
-    setLoadingLessons(true);
-    try {
-      // Backend fixed không có /courses/:id/curriculum, nên build curriculum từ sections + lessons
-      const [sectionsRes, lessonsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/sections/course/${courseId}`),
-        axios.get(`${API_BASE_URL}/lessons/course/${courseId}`)
-      ]);
+  setLoadingLessons(true);
+  try {
+    const res = await axios.get(`${API_BASE_URL}/courses/${courseId}/curriculum`);
+    const curriculumData = Array.isArray(res.data) ? res.data : [];
 
-      const sections = Array.isArray(sectionsRes.data) ? sectionsRes.data : [];
-      const lessons = Array.isArray(lessonsRes.data) ? lessonsRes.data : [];
+    setCurriculum(curriculumData);
 
-      const sectionMap = new Map();
-      for (const s of sections) {
-        sectionMap.set(s.id, {
-          id: s.id,
-          title: s.title,
-          order_index: s.order_index,
-          lessons: []
-        });
-      }
-
-      for (const l of lessons) {
-        const sid = l.section_id;
-        if (!sectionMap.has(sid)) {
-          sectionMap.set(sid, {
-            id: sid,
-            title: l.section_title || `Chương ${sid}`,
-            order_index: l.section_order || 999,
-            lessons: []
-          });
-        }
-        sectionMap.get(sid).lessons.push({
-          id: l.id,
-          title: l.title,
-          video_url: l.video_url,
-          duration: l.duration,
-          order_index: l.order_index,
-        });
-      }
-
-      const curriculumData = Array.from(sectionMap.values())
-        .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
-        .map((sec) => ({
-          ...sec,
-          lessons: sec.lessons.sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
-        }));
-
-      setCurriculum(curriculumData);
-
-      if (curriculumData.length > 0 && curriculumData[0].lessons?.length > 0) {
-        setActiveLesson(curriculumData[0].lessons[0]);
-      }
-    } catch (err) {
-      console.error('Lỗi lấy chương trình học:', err);
-    } finally {
-      setLoadingLessons(false);
+    if (curriculumData.length > 0 && curriculumData[0].lessons?.length > 0) {
+      setActiveLesson(curriculumData[0].lessons[0]);
+    } else {
+      setActiveLesson(null);
     }
-  };
+  } catch (err) {
+    console.error('Lỗi lấy chương trình học:', err);
+    setCurriculum([]);
+    setActiveLesson(null);
+  } finally {
+    setLoadingLessons(false);
+  }
+};
 
   const fetchReviews = async () => {
     setLoadingReviews(true);

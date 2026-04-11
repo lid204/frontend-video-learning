@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import CurriculumAccordion from './components/CurriculumAccordion';
 import axios from 'axios';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
@@ -39,6 +40,9 @@ function HomePageContent({
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [expandingCourseId, setExpandingCourseId] = useState(null);
+  const [courseCurriculum, setCourseCurriculum] = useState([]);
+  const detailRef = useRef(null); 
 
   useEffect(() => {
     let isMounted = true;
@@ -70,6 +74,17 @@ function HomePageContent({
       isMounted = false;
     };
   }, []);
+
+  const toggleExpand = async (courseId) => {
+  try {
+    const res = await axios.get(`${API_BASE_URL}/courses/${courseId}/curriculum`);
+    setCourseCurriculum(Array.isArray(res.data) ? res.data : []);
+    setExpandingCourseId(courseId);
+    setTimeout(() => detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  } catch (err) {
+    console.error('Lỗi lấy chi tiết:', err);
+  }
+};
 
   const filteredCourses = useMemo(() => {
     const keyword = searchQuery.trim().toLowerCase();
@@ -524,6 +539,29 @@ function HomePageContent({
                 </SwiperSlide>
               ))}
             </Swiper>
+          </div>
+        )}
+      </div>
+
+      <div ref={detailRef} style={{ maxWidth: '1200px', margin: '50px auto', padding: '0 20px 100px 20px' }}>
+        {expandingCourseId && (
+          <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '24px', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', animation: 'fadeInUp 0.5s ease' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '30px' }}>
+              <div style={{ flex: 1 }}>
+                <h2 style={{ fontSize: '32px', color: '#0f172a', margin: '0 0 15px 0', fontWeight: '800' }}>
+                  {courses.find(c => c.id === expandingCourseId)?.title}
+                </h2>
+                <div style={{ color: '#475569', fontSize: '16px', lineHeight: '1.6', marginBottom: '20px' }} dangerouslySetInnerHTML={{ __html: courses.find(c => c.id === expandingCourseId)?.description }} />
+                <div style={{ fontSize: '24px', fontWeight: '800', color: '#10b981' }}>Giá: {Number(courses.find(c => c.id === expandingCourseId)?.price).toLocaleString('vi-VN')}đ</div>
+              </div>
+              <button onClick={() => setExpandingCourseId(null)} style={{ background: '#f1f5f9', border: 'none', padding: '10px 20px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', color: '#ef4444' }}>Đóng lại ❌</button>
+            </div>
+            <div style={{ borderTop: '2px solid #f1f5f9', paddingTop: '30px' }}>
+              <h3 style={{ marginBottom: '20px', color: '#334155' }}>📑 Chi tiết tổng quan các bài học:</h3>
+              <div style={{ backgroundColor: '#f8fafc', borderRadius: '16px', padding: '10px' }}>
+                <CurriculumAccordion curriculumData={courseCurriculum} />
+              </div>
+            </div>
           </div>
         )}
       </div>
