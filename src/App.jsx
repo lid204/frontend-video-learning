@@ -11,6 +11,7 @@ import CourseDetail from './CourseDetail';
 import AdminDashboard from './AdminDashboard';
 import Cart from './cart'; 
 import Payment from './Payment'; 
+import MyCourses from './MyCourses';
 import API_BASE_URL from './config/api';
 
 function App() {
