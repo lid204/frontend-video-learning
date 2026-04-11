@@ -211,10 +211,20 @@ function App() {
     <ToastContainer position="top-right" autoClose={3000} theme="colored" />
   );
 
-
   const cartNode = (
     <>
-      {/* 👇 Đã sửa bottom thành 100px để nhường chỗ cho nút Quản lý ở dưới 👇 */}
+      {/* NÚT TRUY CẬP NHANH VÀO KHÓA HỌC CỦA TÔI */}
+      {isLoggedIn && (
+        <button 
+          onClick={() => setCurrentView('myCourses')}
+          style={{ position: 'fixed', bottom: '170px', right: '20px', padding: '15px', borderRadius: '50%', backgroundColor: '#8b5cf6', color: 'white', border: 'none', cursor: 'pointer', fontSize: '20px', zIndex: 1000, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+          title="Khóa học của tôi"
+        >
+          📚
+        </button>
+      )}
+
+      {/* NÚT GIỎ HÀNG */}
       <button 
         onClick={() => setIsCartOpen(true)}
         style={{ position: 'fixed', bottom: '100px', right: '20px', padding: '15px', borderRadius: '50%', backgroundColor: '#10b981', color: 'white', border: 'none', cursor: 'pointer', fontSize: '20px', zIndex: 1000, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
@@ -226,13 +236,10 @@ function App() {
         <Cart 
           cartItems={cartItems} 
           onClose={() => setIsCartOpen(false)} 
-          
-          /* 👇 BỔ SUNG THÊM DÒNG NÀY ĐỂ NÚT "XÓA" HOẠT ĐỘNG 👇 */
           onRemoveItem={(id) => setCartItems(cartItems.filter(item => item.id !== id))} 
-          
           onCheckout={() => {
-            setIsCartOpen(false); // Đóng giỏ hàng
-            setCurrentView('payment'); // Chuyển sang trang thanh toán
+            setIsCartOpen(false); 
+            setCurrentView('payment'); 
           }} 
         />
       )}
@@ -250,7 +257,6 @@ function App() {
           isLoggedIn={isLoggedIn}
           currentUser={currentUser}
           onLogoutClick={handleLogout}
-          // 👇 Gắn công tắc onViewCourse tại đây
           onViewCourse={(id) => {
             setViewingCourseId(id);
             setCurrentView('courseDetail');
@@ -306,28 +312,25 @@ function App() {
           courseId={viewingCourseId} 
           onBack={() => setCurrentView('courses')} 
           
-          // 👇 BỔ SUNG ĐOẠN NÀY ĐỂ KẾT NỐI VỚI NÚT ĐĂNG KÝ 👇
           onAddToCart={(courseData) => {
             if (!isLoggedIn || !currentUser) {
               alert("⚠️ Vui lòng Đăng nhập hoặc Đăng ký để thêm khóa học vào giỏ!");
-              setCurrentView('auth'); // Đá sang màn hình Login
-              return; // Dừng lại, không cho chạy code thêm vào giỏ bên dưới
+              setCurrentView('auth'); 
+              return; 
             }
-            // Kiểm tra xem khóa học đã có trong giỏ chưa
             const isAlreadyInCart = cartItems.some(item => item.id === courseData.id);
             if (!isAlreadyInCart) {
-              setCartItems([...cartItems, courseData]); // Thêm vào giỏ
+              setCartItems([...cartItems, courseData]); 
             }
-            setIsCartOpen(true); // Tự động bật popup Giỏ hàng lên
+            setIsCartOpen(true); 
           }}
-          // 👆 KẾT THÚC ĐOẠN BỔ SUNG 👆
-
         />
         {toastNode}
         {cartNode}
       </>
     );
   }
+
   if (currentView === 'payment') {
     return (
       <>
@@ -336,9 +339,8 @@ function App() {
           cartItems={cartItems}     
           totalAmount={cartItems.reduce((sum, item) => sum + parseInt(Number(item.price) || 0, 10), 0)}
           onPaymentSuccess={() => {
-            alert("Thanh toán thành công!");
             setCartItems([]); 
-            setCurrentView('home');
+            setCurrentView('myCourses'); 
           }}
           onCancel={() => setCurrentView('home')}
         />
@@ -347,7 +349,6 @@ function App() {
     );
   }
   
-
   if (currentView === 'auth') {
     return (
       <>
@@ -517,6 +518,36 @@ function App() {
             </div>
           </div>
         </div>
+        {toastNode}
+      </>
+    );
+  }
+
+  if (currentView === 'myCourses') {
+    return (
+      <>
+        <MyCourses 
+          currentUser={currentUser}
+          onBack={() => setCurrentView('home')}
+          onGoToLearning={(course) => {
+            setSelectedCourse(course);
+            setCurrentView('learning');
+          }}
+        />
+        {cartNode}
+        {toastNode}
+      </>
+    );
+  }
+
+  if (currentView === 'learning') {
+    return (
+      <>
+        <LearningRoom
+          course={selectedCourse}
+          currentUser={currentUser}
+          onBack={() => setCurrentView('myCourses')} 
+        />
         {toastNode}
       </>
     );
