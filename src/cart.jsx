@@ -1,16 +1,39 @@
 import React from 'react';
 
-const Cart = ({ cartItems, onRemoveItem, onCheckout, onBack }) => {
+// Đổi onBack thành onClose để khớp với App.jsx
+const Cart = ({ cartItems, onRemoveItem, onCheckout, onClose }) => {
   // Tính tổng tiền giỏ hàng
   const totalPrice = cartItems.reduce((sum, item) => sum + Number(item.price), 0);
 
   return (
-    <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', padding: '40px 20px' }}>
-      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+    /* LỚP PHỦ ĐEN MỜ NẰM TRÊN CÙNG (OVERLAY) */
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      display: 'flex', justifyContent: 'center', alignItems: 'center',
+      zIndex: 99999, // Kích max z-index để nổi lên trên mọi thứ
+      padding: '20px',
+      backdropFilter: 'blur(4px)' // Hiệu ứng làm mờ nền sau cực xịn
+    }}>
+      
+      /* KHUNG GIỎ HÀNG (MODAL) */
+      <div style={{ 
+        backgroundColor: '#f8fafc', 
+        width: '100%', maxWidth: '900px', 
+        maxHeight: '90vh', overflowY: 'auto', // Cuộn nếu có quá nhiều khóa học
+        borderRadius: '24px', padding: '40px 20px',
+        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+        position: 'relative'
+      }}>
         
+        {/* Nút X Đóng giỏ hàng ở góc phải */}
+        <button onClick={onClose} style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#64748b' }}>
+          ✖
+        </button>
+
         {/* Nút quay lại & Tiêu đề */}
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '30px' }}>
-          <button onClick={onBack} style={backBtnStyle}>
+          <button onClick={onClose} style={backBtnStyle}>
             🔙 Tiếp tục tìm khóa học
           </button>
           <h2 style={{ fontSize: '28px', color: '#0f172a', margin: '0 0 0 20px' }}>
@@ -24,14 +47,14 @@ const Cart = ({ cartItems, onRemoveItem, onCheckout, onBack }) => {
             <div style={{ fontSize: '60px', marginBottom: '20px' }}>🪹</div>
             <h3 style={{ color: '#64748b', fontSize: '20px' }}>Giỏ hàng đang trống</h3>
             <p style={{ color: '#94a3b8', marginTop: '10px' }}>Hãy khám phá thêm các khóa học tuyệt vời nhé!</p>
-            <button onClick={onBack} style={{ ...primaryBtnStyle, marginTop: '20px' }}>Khám phá ngay</button>
+            <button onClick={onClose} style={{ ...primaryBtnStyle, marginTop: '20px' }}>Khám phá ngay</button>
           </div>
         ) : (
           // Trạng thái có hàng
           <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
             
             {/* Cột trái: Danh sách khóa học */}
-            <div style={{ flex: '1 1 500px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div style={{ flex: '1 1 400px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
               {cartItems.map((item, index) => (
                 <div key={index} style={cartItemStyle}>
                   <div style={{ width: '120px', height: '80px', backgroundColor: '#e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
@@ -43,7 +66,10 @@ const Cart = ({ cartItems, onRemoveItem, onCheckout, onBack }) => {
                       {Number(item.price).toLocaleString()} VNĐ
                     </span>
                   </div>
-                  <button onClick={() => onRemoveItem(item.id)} style={deleteBtnStyle}>
+                  <button 
+                    onClick={() => onRemoveItem ? onRemoveItem(item.id) : alert("Chưa gắn hàm xóa!")} 
+                    style={deleteBtnStyle}
+                  >
                     ❌ Xóa
                   </button>
                 </div>
@@ -61,7 +87,7 @@ const Cart = ({ cartItems, onRemoveItem, onCheckout, onBack }) => {
                 <span style={{ fontWeight: 'bold' }}>Tổng cộng:</span>
                 <span style={{ color: '#ef4444', fontWeight: '900' }}>{totalPrice.toLocaleString()} đ</span>
               </div>
-              <button onClick={onCheckout} style={{ ...successBtnStyle, width: '100%', padding: '15px' }}>
+              <button onClick={onCheckout} style={{ ...successBtnStyle, width: '100%', padding: '15px', boxShadow: '0 4px 12px rgba(16,185,129,0.3)' }}>
                 💳 Thanh toán ngay
               </button>
             </div>
