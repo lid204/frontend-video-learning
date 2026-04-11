@@ -307,6 +307,8 @@ function App() {
     return (
       <>
         <Payment 
+          currentUser={currentUser}
+          cartItems={cartItems}     
           totalAmount={cartItems.reduce((sum, item) => sum + item.price, 0)}
           onPaymentSuccess={() => {
             alert("Thanh toán thành công!");
