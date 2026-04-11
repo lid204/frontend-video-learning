@@ -1,24 +1,43 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 
-const Payment = ({ totalAmount, onPaymentSuccess, onCancel }) => {
+// Thêm prop currentUser và cartItems để lấy dữ liệu gửi cho Backend
+const Payment = ({ currentUser, cartItems, totalAmount, onPaymentSuccess, onCancel }) => {
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Gọi API VietQR tạo mã thanh toán động cực xịn cho lúc Demo
-  const bankId = 'MB'; // Ngân hàng MB Bank
-  const accountNo = '0123456789'; // Số tài khoản (Có thể thay số thật của bạn)
-  const accountName = 'NGUYEN KHAC NHU'; // Tên thật của Tư lệnh để biểu diễn
-  const addInfo = 'Thanh toan khoa hoc ELearning';
+  const bankId = 'MB'; 
+  const accountNo = '0123456789'; 
+  const accountName = 'NGUYEN KHAC NHU'; 
+  const addInfo = `Thanh toan khoa hoc`;
   
-  // Link API tự động render ảnh QR
   const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.jpg?amount=${totalAmount}&addInfo=${addInfo}&accountName=${accountName}`;
 
-  const handleSimulatePayment = () => {
+  // Hàm gọi API thật lên Backend
+  const handleRealPayment = async () => {
+    if (!currentUser) {
+      alert("⚠️ Vui lòng đăng nhập để thanh toán!");
+      return;
+    }
+
     setIsProcessing(true);
-    // Giả lập thời gian chờ ngân hàng xử lý 2 giây cho giống thật
-    setTimeout(() => {
+
+    try {
+      // Gọi link API Vercel thật của nhóm (Nhớ dùng đúng link đang chạy)
+      const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api";
+      
+      const response = await axios.post(`${API_URL}/checkout`, {
+        user_id: currentUser.id,
+        cartItems: cartItems
+      });
+
+      alert("🎉 " + response.data.message);
+      onPaymentSuccess(); // Quay về trang chủ và xóa giỏ hàng
+    } catch (error) {
+      console.error(error);
+      alert("❌ Lỗi kết nối đến máy chủ thanh toán!");
+    } finally {
       setIsProcessing(false);
-      onPaymentSuccess();
-    }, 2000); 
+    }
   };
 
   return (
@@ -28,16 +47,10 @@ const Payment = ({ totalAmount, onPaymentSuccess, onCancel }) => {
         <h2 style={{ margin: '0 0 10px 0', color: '#0f172a', fontSize: '26px' }}>Thanh Toán Quét Mã</h2>
         <p style={{ color: '#64748b', marginBottom: '30px' }}>Mở App Ngân hàng bất kỳ để quét mã QR</p>
 
-        {/* Khung chứa mã QR */}
         <div style={{ border: '2px dashed #cbd5e1', padding: '20px', borderRadius: '16px', marginBottom: '20px', backgroundColor: '#f8fafc' }}>
-          <img 
-            src={qrUrl} 
-            alt="Mã QR Thanh toán" 
-            style={{ width: '100%', borderRadius: '12px', mixBlendMode: 'multiply' }} 
-          />
+          <img src={qrUrl} alt="Mã QR" style={{ width: '100%', borderRadius: '12px', mixBlendMode: 'multiply' }} />
         </div>
 
-        {/* Thông tin đơn hàng */}
         <div style={{ backgroundColor: '#f1f5f9', padding: '15px', borderRadius: '12px', marginBottom: '30px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
             <span style={{ color: '#475569' }}>Chủ tài khoản:</span>
@@ -51,14 +64,14 @@ const Payment = ({ totalAmount, onPaymentSuccess, onCancel }) => {
           </div>
         </div>
 
-        {/* Các nút thao tác */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* Nút thanh toán giờ gọi hàm gọi API thật */}
           <button 
-            onClick={handleSimulatePayment} 
+            onClick={handleRealPayment} 
             disabled={isProcessing}
             style={{ padding: '14px', backgroundColor: isProcessing ? '#94a3b8' : '#3b82f6', color: 'white', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: 'bold', cursor: isProcessing ? 'not-allowed' : 'pointer', transition: '0.3s' }}
           >
-            {isProcessing ? '⏳ Đang xử lý giao dịch...' : '✅ Đã chuyển khoản xong (Demo)'}
+            {isProcessing ? '⏳ Đang xác nhận hệ thống...' : '✅ Đã chuyển khoản xong'}
           </button>
           
           <button 
