@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import ReactPlayer from 'react-player';
+import LearningSpace from './LearningSpace';
 import axios from 'axios';
 import { FaStar, FaRegStar, FaPlay, FaCheckCircle, FaClock, FaArrowLeft, FaChalkboardTeacher } from 'react-icons/fa';
 import { MdOutlineRateReview } from 'react-icons/md';
 import CurriculumAccordion from "./components/CurriculumAccordion";
-
-const BASE_URL = 'https://backend-video-learning-lid204s-projects.vercel.app/api';
+import API_BASE_URL from './config/api';
 
 function StarRating({ rating, onRate, readonly = false, size = 24 }) {
   const [hovered, setHovered] = useState(0);
@@ -60,25 +59,31 @@ function LearningRoom({ course, currentUser, onBack }) {
   }, [courseId]);
 
   const fetchCurriculum = async () => {
-    setLoadingLessons(true);
-    try {
-      const res = await axios.get(`${BASE_URL}/courses/${courseId}/curriculum`);
-      const data = res.data;
-      setCurriculum(data);
-      if (data.length > 0 && data[0].lessons?.length > 0) {
-        setActiveLesson(data[0].lessons[0]);
-      }
-    } catch (err) {
-      console.error('Lỗi lấy chương trình học:', err);
-    } finally {
-      setLoadingLessons(false);
+  setLoadingLessons(true);
+  try {
+    const res = await axios.get(`${API_BASE_URL}/courses/${courseId}/curriculum`);
+    const curriculumData = Array.isArray(res.data) ? res.data : [];
+
+    setCurriculum(curriculumData);
+
+    if (curriculumData.length > 0 && curriculumData[0].lessons?.length > 0) {
+      setActiveLesson(curriculumData[0].lessons[0]);
+    } else {
+      setActiveLesson(null);
     }
-  };
+  } catch (err) {
+    console.error('Lỗi lấy chương trình học:', err);
+    setCurriculum([]);
+    setActiveLesson(null);
+  } finally {
+    setLoadingLessons(false);
+  }
+};
 
   const fetchReviews = async () => {
     setLoadingReviews(true);
     try {
-      const res = await axios.get(`${BASE_URL}/reviews/${courseId}`);
+      const res = await axios.get(`${API_BASE_URL}/reviews/${courseId}`);
       setReviews(res.data.reviews || []);
       setAvgRating(res.data.avg_rating || 0);
       setTotalReviews(res.data.total_reviews || 0);
@@ -131,7 +136,7 @@ function LearningRoom({ course, currentUser, onBack }) {
     setSubmitting(true);
     setReviewMsg('');
     try {
-      const res = await axios.post(`${BASE_URL}/reviews`, {
+      const res = await axios.post(`${API_BASE_URL}/reviews`, {
         user_id: currentUser.id,
         course_id: courseId,
         rating: myRating,
@@ -198,16 +203,13 @@ function LearningRoom({ course, currentUser, onBack }) {
           <div style={styles.playerWrapper}>
             {activeLesson ? (
               <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
-                <ReactPlayer
-                  url={getVideoUrl(activeLesson)}
-                  width="100%"
-                  height="100%"
-                  controls
-                  playing={playing}
-                  onPlay={() => setPlaying(true)}
-                  onPause={() => setPlaying(false)}
+                <LearningSpace
+                  key={activeLesson.id}
+                  lessonId={activeLesson.id}
+                  videoUrl={getVideoUrl(activeLesson)}
+                  userId={currentUser?.id ?? null}
                   onEnded={handleLessonEnd}
-                  config={{ youtube: { playerVars: { rel: 0, modestbranding: 1 } } }}
+                  onPlayStateChange={setPlaying}
                 />
               </div>
             ) : (

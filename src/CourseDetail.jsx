@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_BASE_URL from './config/api';
 
 const CourseDetail = ({ courseId, onBack }) => {
   const [course, setCourse] = useState(null);
@@ -8,7 +9,7 @@ const CourseDetail = ({ courseId, onBack }) => {
   useEffect(() => {
     const fetchCourseDetail = async () => {
       try {
-        const response = await axios.get(`https://backend-video-learning-lid204s-projects.vercel.app/api/courses/${courseId}`);
+        const response = await axios.get(`${API_BASE_URL}/courses/${courseId}`);
         setCourse(response.data);
         setLoading(false);
       } catch (error) {
@@ -33,7 +34,7 @@ const CourseDetail = ({ courseId, onBack }) => {
         <div style={{ flex: '2', minWidth: '600px' }}>
           <h1 style={{ fontSize: '32px', color: '#0f172a', marginBottom: '10px' }}>{course.title}</h1>
           <p style={{ color: '#64748b', fontSize: '16px', marginBottom: '20px' }}>
-            📁 Danh mục: <strong>{course.category_name || 'Chưa phân loại'}</strong> | 👨‍🏫 Giảng viên: <strong>{course.teacher_name}</strong>
+            📁 Danh mục: <strong>{course.category_name || 'Chưa phân loại'}</strong>
           </p>
           
           <img 

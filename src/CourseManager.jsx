@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import API_BASE_URL from './config/api';
 
 function CourseManager({ onGoToLearning }) { 
   const [courses, setCourses] = useState([]);
@@ -18,11 +19,10 @@ function CourseManager({ onGoToLearning }) {
   const [sections, setSections] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
 
-  // ĐÃ SỬA LẠI THÀNH LOCALHOST ĐỂ KHÔNG BỊ LỖI CORS
-  const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/courses";
-  const UPLOAD_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/upload";
-  const BASE_API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api";
-  const CATEGORY_API = "https://backend-video-learning-lid204s-projects.vercel.app/api/categories";
+  const API_URL = `${API_BASE_URL}/courses`;
+  const UPLOAD_URL = `${API_BASE_URL}/upload`;
+  const BASE_API_URL = API_BASE_URL;
+  const CATEGORY_API = `${API_BASE_URL}/categories`;
 
   const fetchCourses = async () => {
     try {
@@ -43,8 +43,40 @@ function CourseManager({ onGoToLearning }) {
   const fetchCurriculum = async (course) => {
     setSelectedCourse(course);
     try {
-      const res = await axios.get(`${API_URL}/${course.id}/curriculum`);
-      setSections(res.data); 
+      // Backend fixed build curriculum từ sections + lessons
+      const [sectionsRes, lessonsRes] = await Promise.all([
+        axios.get(`${BASE_API_URL}/sections/course/${course.id}`),
+        axios.get(`${BASE_API_URL}/lessons/course/${course.id}`)
+      ]);
+      const secs = Array.isArray(sectionsRes.data) ? sectionsRes.data : [];
+      const lessons = Array.isArray(lessonsRes.data) ? lessonsRes.data : [];
+
+      const sectionMap = new Map();
+      for (const s of secs) {
+        sectionMap.set(s.id, { id: s.id, title: s.title, order_index: s.order_index, lessons: [] });
+      }
+      for (const l of lessons) {
+        const sid = l.section_id;
+        if (!sectionMap.has(sid)) {
+          sectionMap.set(sid, { id: sid, title: l.section_title || `Chương ${sid}`, order_index: l.section_order || 999, lessons: [] });
+        }
+        sectionMap.get(sid).lessons.push({
+          id: l.id,
+          title: l.title,
+          video_url: l.video_url,
+          order_index: l.order_index,
+          duration: l.duration,
+        });
+      }
+
+      const curriculumData = Array.from(sectionMap.values())
+        .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+        .map((sec) => ({
+          ...sec,
+          lessons: sec.lessons.sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+        }));
+
+      setSections(curriculumData);
     } catch (err) { console.error(err); }
   };
 
@@ -71,10 +103,13 @@ function CourseManager({ onGoToLearning }) {
     const url = prompt("Dán link YouTube bài học:");
     if (!title || !url) return;
     try {
+      const sec = sections.find((s) => s.id === sectionId);
+      const nextOrder = (sec?.lessons?.length || 0) + 1;
       await axios.post(`${BASE_API_URL}/lessons`, {
-        section_id: sectionId, 
-        title: title,
-        video_url: url
+        section_id: sectionId,
+        title,
+        video_url: url,
+        order_index: nextOrder,
       });
       fetchCurriculum(selectedCourse); 
     } catch (err) { alert("Lỗi thêm bài học!"); }
@@ -120,28 +155,6 @@ function CourseManager({ onGoToLearning }) {
   return (
     <div style={{ padding: '30px', backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
       <h2 style={{ color: '#0f172a', marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '10px' }}>📚 Quản Lý Khóa Học</h2>
-      
-      {/* ================= COMPONENT THÊM DANH MỤC CỦA DUY ================= */}
-      <div style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '30px' }}>
-        <h3 style={{ margin: '0 0 15px 0', color: '#0f172a', fontSize: '16px' }}>🏷️ Thêm Danh Mục Mới</h3>
-        <form 
-          onSubmit={async (e) => {
-            e.preventDefault();
-            try {
-              await axios.post(CATEGORY_API, { name: e.target.catName.value });
-              alert("✅ Đã thêm danh mục thành công!");
-              e.target.reset(); // Xóa trắng ô input
-              fetchCategories(); // Gọi hàm của Danh để update ngay lập tức vào thẻ <select> bên dưới
-            } catch (err) { alert("❌ Lỗi khi thêm danh mục!"); }
-          }} 
-          style={{ display: 'flex', gap: '10px' }}
-        >
-          <input name="catName" type="text" placeholder="Nhập tên danh mục (VD: Lập trình Web)..." required style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} />
-          <button type="submit" style={{ padding: '12px 20px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>+ Thêm Danh Mục</button>
-        </form>
-      </div>
-      {/* ================= KẾT THÚC COMPONENT CỦA DUY ================= */}
-
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '50px' }}>
         <div style={{ display: 'flex', gap: '15px' }}>
           <input
