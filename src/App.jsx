@@ -213,16 +213,22 @@ function App() {
 
   const cartNode = (
     <>
+      {/* 👇 Đã sửa bottom thành 100px để nhường chỗ cho nút Quản lý ở dưới 👇 */}
       <button 
         onClick={() => setIsCartOpen(true)}
-        style={{ position: 'fixed', bottom: '20px', right: '20px', padding: '15px', borderRadius: '50%', backgroundColor: '#10b981', color: 'white', border: 'none', cursor: 'pointer', fontSize: '20px', zIndex: 1000, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+        style={{ position: 'fixed', bottom: '100px', right: '20px', padding: '15px', borderRadius: '50%', backgroundColor: '#10b981', color: 'white', border: 'none', cursor: 'pointer', fontSize: '20px', zIndex: 1000, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
       >
         🛒 ({cartItems.length})
       </button>
+
       {isCartOpen && (
         <Cart 
           cartItems={cartItems} 
           onClose={() => setIsCartOpen(false)} 
+          
+          /* 👇 BỔ SUNG THÊM DÒNG NÀY ĐỂ NÚT "XÓA" HOẠT ĐỘNG 👇 */
+          onRemoveItem={(id) => setCartItems(cartItems.filter(item => item.id !== id))} 
+          
           onCheckout={() => {
             setIsCartOpen(false); // Đóng giỏ hàng
             setCurrentView('payment'); // Chuyển sang trang thanh toán
