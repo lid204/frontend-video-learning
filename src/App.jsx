@@ -257,21 +257,14 @@ function App() {
           }}
         />
 
-        {canManage ? (
+        {canManage && (
           <button
             onClick={handleOpenDashboard}
             style={{ position: 'fixed', bottom: '30px', right: '30px', padding: '15px 25px', backgroundColor: '#f59e0b', color: 'white', border: 'none', borderRadius: '50px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 1000 }}
           >
             ⚙️ Quản Lý Hệ Thống
           </button>
-        ) : isLoggedIn ? (
-          <button
-            onClick={() => setCurrentView('myCourses')}
-            style={{ position: 'fixed', bottom: '30px', right: '30px', padding: '15px 25px', backgroundColor: '#8b5cf6', color: 'white', border: 'none', borderRadius: '50px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 1000 }}
-          >
-            📚 Khóa Học Của Tôi
-          </button>
-        ) : null}
+        )}
         
         {cartNode}
         {toastNode}
