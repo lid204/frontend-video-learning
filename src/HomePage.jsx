@@ -69,7 +69,12 @@ function HomePageContent({
     };
 
     fetchData();
+    return () => {
+        isMounted = false;
+      };
+    }, []); 
 
+    // --- (Phần code dưới này như toggleExpand giữ nguyên) ---
   const toggleExpand = async (courseId) => {
   try {
     const res = await axios.get(`${API_BASE_URL}/courses/${courseId}/curriculum`);
