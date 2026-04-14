@@ -36,7 +36,7 @@ function HomePage({ onLoginClick, onViewCoursesClick, isLoggedIn, currentUser, o
 
   const filteredCourses = courses.filter(course => {
     const matchSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchCategory = activeCategoryId === null || course.category_id === activeCategoryId;
+    const matchCategory = activeCategoryId == null || course.category_id == activeCategoryId;
     return matchSearch && matchCategory;
   });
 
