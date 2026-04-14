@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import API_BASE_URL from './config/api';
+import { toast } from 'react-toastify';
 
 function CourseManager({ onGoToLearning }) { 
   const [courses, setCourses] = useState([]);
@@ -18,11 +20,17 @@ function CourseManager({ onGoToLearning }) {
   const [sections, setSections] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
 
-  // ĐÃ SỬA LẠI THÀNH LOCALHOST ĐỂ KHÔNG BỊ LỖI CORS
-  const API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/courses";
-  const UPLOAD_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api/upload";
-  const BASE_API_URL = "https://backend-video-learning-lid204s-projects.vercel.app/api";
-  const CATEGORY_API = "https://backend-video-learning-lid204s-projects.vercel.app/api/categories";
+  // --- CODE CỦA VĨ: Quản lý Modal Pop-up ---
+  const [showSectionModal, setShowSectionModal] = useState(false);
+  const [showLessonModal, setShowLessonModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [modalInput, setModalInput] = useState({ title: '', url: '', sectionId: null });
+
+  const API_URL = `${API_BASE_URL}/courses`;
+  const UPLOAD_URL = `${API_BASE_URL}/upload`;
+  const BASE_API_URL = API_BASE_URL;
+  const CATEGORY_API = `${API_BASE_URL}/categories`;
 
   const fetchCourses = async () => {
     try {
@@ -43,8 +51,39 @@ function CourseManager({ onGoToLearning }) {
   const fetchCurriculum = async (course) => {
     setSelectedCourse(course);
     try {
-      const res = await axios.get(`${API_URL}/${course.id}/curriculum`);
-      setSections(res.data); 
+      const [sectionsRes, lessonsRes] = await Promise.all([
+        axios.get(`${BASE_API_URL}/sections/course/${course.id}`),
+        axios.get(`${BASE_API_URL}/lessons/course/${course.id}`)
+      ]);
+      const secs = Array.isArray(sectionsRes.data) ? sectionsRes.data : [];
+      const lessons = Array.isArray(lessonsRes.data) ? lessonsRes.data : [];
+
+      const sectionMap = new Map();
+      for (const s of secs) {
+        sectionMap.set(s.id, { id: s.id, title: s.title, order_index: s.order_index, lessons: [] });
+      }
+      for (const l of lessons) {
+        const sid = l.section_id;
+        if (!sectionMap.has(sid)) {
+          sectionMap.set(sid, { id: sid, title: l.section_title || `Chương ${sid}`, order_index: l.section_order || 999, lessons: [] });
+        }
+        sectionMap.get(sid).lessons.push({
+          id: l.id,
+          title: l.title,
+          video_url: l.video_url,
+          order_index: l.order_index,
+          duration: l.duration,
+        });
+      }
+
+      const curriculumData = Array.from(sectionMap.values())
+        .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+        .map((sec) => ({
+          ...sec,
+          lessons: sec.lessons.sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+        }));
+
+      setSections(curriculumData);
     } catch (err) { console.error(err); }
   };
 
@@ -53,43 +92,61 @@ function CourseManager({ onGoToLearning }) {
     fetchCategories();
   }, []);
 
-  const handleAddSection = async () => {
-    const title = prompt("Nhập tên chương mới (VD: Chương 1: Cơ bản):");
-    if (!title) return;
+  const handleAddSection = () => {
+    setModalInput({ title: '', url: '', sectionId: null });
+    setShowSectionModal(true);
+  };
+
+  const confirmAddSection = async () => {
+    if (!modalInput.title.trim()) return toast.warn("Ní chưa nhập tên chương kìa!");
     try {
       await axios.post(`${BASE_API_URL}/sections`, {
         course_id: selectedCourse.id, 
-        title: title,
+        title: modalInput.title,
         order_index: sections.length + 1
       });
+      setShowSectionModal(false);
       fetchCurriculum(selectedCourse); 
-    } catch (err) { alert("❌ Lỗi thêm chương!"); }
+      toast.success("📂 Đã thêm chương mới thành công!");
+    } catch (err) { toast.error("❌ Lỗi thêm chương!"); }
   };
 
-  const handleAddLesson = async (sectionId) => {
-    const title = prompt("Tên bài học:");
-    const url = prompt("Dán link YouTube bài học:");
-    if (!title || !url) return;
+  const handleAddLesson = (sectionId) => {
+    setModalInput({ title: '', url: '', sectionId: sectionId });
+    setShowLessonModal(true);
+  };
+
+  const confirmAddLesson = async () => {
+    if (!modalInput.title || !modalInput.url) return toast.warn("Điền đủ tên với link đi ní ơi!");
     try {
+      const sec = sections.find((s) => s.id === modalInput.sectionId);
+      const nextOrder = (sec?.lessons?.length || 0) + 1;
       await axios.post(`${BASE_API_URL}/lessons`, {
-        section_id: sectionId, 
-        title: title,
-        video_url: url
+        section_id: modalInput.sectionId,
+        title: modalInput.title,
+        video_url: modalInput.url,
+        order_index: nextOrder,
       });
+      setShowLessonModal(false);
       fetchCurriculum(selectedCourse); 
-    } catch (err) { alert("Lỗi thêm bài học!"); }
+      toast.success("✅ Thêm bài học thành công!");
+    } catch (err) { toast.error("Lỗi thêm bài học!"); }
   };
 
-  const handleDeleteCourse = async (id) => {
-    if (window.confirm("Bạn có chắc muốn xóa không?")) {
-      try {
-        await axios.delete(`${API_URL}/${id}`);
-        fetchCourses();
-        setSelectedCourse(null);
-        alert("🗑️ Đã xóa thành công!");
-      } catch (err) {
-        alert("❌ Xóa thất bại! Ní nhớ Restart Backend chưa?");
-      }
+  const handleDeleteCourse = (id) => {
+    setItemToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`${API_URL}/${itemToDelete}`);
+      fetchCourses();
+      setSelectedCourse(null);
+      setShowDeleteModal(false);
+      toast.info("🗑️ Đã xóa thành công khóa học!");
+    } catch (err) {
+      toast.error("❌ Xóa thất bại! Ní nhớ Restart Backend chưa?");
     }
   };
 
@@ -105,43 +162,20 @@ function CourseManager({ onGoToLearning }) {
         finalImageUrl = uploadRes.data.imageUrl;
       }
       await axios.post(API_URL, { ...formData, thumbnail_url: finalImageUrl });
-      alert("✅ Thêm khóa học thành công!");
-
+      toast.success("🚀 Thêm khóa học thành công!");
       setFormData({ title: '', description: '', price: '', thumbnail_url: '', category_id: '' });
       setImageFile(null);
       setIsUploading(false);
       fetchCourses();
     } catch (err) { 
       setIsUploading(false);
-      alert("❌ Lỗi: " + (err.response?.data?.error || "Lỗi rồi ní!"));
+      toast.error("❌ Lỗi: " + (err.response?.data?.error || "Lỗi rồi ní!"));
     }
   };
 
   return (
     <div style={{ padding: '30px', backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
       <h2 style={{ color: '#0f172a', marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '10px' }}>📚 Quản Lý Khóa Học</h2>
-      
-      {/* ================= COMPONENT THÊM DANH MỤC CỦA DUY ================= */}
-      <div style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '30px' }}>
-        <h3 style={{ margin: '0 0 15px 0', color: '#0f172a', fontSize: '16px' }}>🏷️ Thêm Danh Mục Mới</h3>
-        <form 
-          onSubmit={async (e) => {
-            e.preventDefault();
-            try {
-              await axios.post(CATEGORY_API, { name: e.target.catName.value });
-              alert("✅ Đã thêm danh mục thành công!");
-              e.target.reset(); // Xóa trắng ô input
-              fetchCategories(); // Gọi hàm của Danh để update ngay lập tức vào thẻ <select> bên dưới
-            } catch (err) { alert("❌ Lỗi khi thêm danh mục!"); }
-          }} 
-          style={{ display: 'flex', gap: '10px' }}
-        >
-          <input name="catName" type="text" placeholder="Nhập tên danh mục (VD: Lập trình Web)..." required style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} />
-          <button type="submit" style={{ padding: '12px 20px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>+ Thêm Danh Mục</button>
-        </form>
-      </div>
-      {/* ================= KẾT THÚC COMPONENT CỦA DUY ================= */}
-
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '50px' }}>
         <div style={{ display: 'flex', gap: '15px' }}>
           <input
@@ -235,11 +269,68 @@ function CourseManager({ onGoToLearning }) {
           </div>
         </div>
       )}
+
+      {/* --- CẤU TRÚC POP-UP MỚI CỦA VĨ --- */}
+      {showSectionModal && (
+        <div style={modalOverlay}>
+          <div style={modalContent}>
+            <h3 style={{ marginTop: 0, marginBottom: '25px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '10px' }}>📁 Thêm Chương Mới</h3>
+            <input 
+              style={{ ...inputStyle, width: '100%', boxSizing: 'border-box', padding: '15px' }} 
+              placeholder="Nhập tên chương..." 
+              value={modalInput.title} 
+              onChange={(e) => setModalInput({ ...modalInput, title: e.target.value })} 
+            />
+            <div style={modalActions}>
+              <button onClick={() => setShowSectionModal(false)} style={neutralBtn}>Hủy</button>
+              <button onClick={confirmAddSection} style={successBtn}>Xác nhận ✅</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLessonModal && (
+        <div style={modalOverlay}>
+          <div style={modalContent}>
+            <h3 style={{ marginTop: 0, marginBottom: '25px', color: '#0f172a' }}>▶️ Thêm Bài Học</h3>
+            <input 
+              style={{ ...inputStyle, width: '100%', boxSizing: 'border-box', marginBottom: '15px', padding: '15px' }} 
+              placeholder="Tên bài học..." 
+              value={modalInput.title} 
+              onChange={(e) => setModalInput({ ...modalInput, title: e.target.value })} 
+            />
+            <input 
+              style={{ ...inputStyle, width: '100%', boxSizing: 'border-box', padding: '15px' }} 
+              placeholder="Dán link YouTube bài học..." 
+              value={modalInput.url} 
+              onChange={(e) => setModalInput({ ...modalInput, url: e.target.value })} 
+            />
+            <div style={modalActions}>
+              <button onClick={() => setShowLessonModal(false)} style={neutralBtn}>Hủy</button>
+              <button onClick={confirmAddLesson} style={successBtn}>Thêm Ngay 🚀</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && (
+        <div style={modalOverlay}>
+          <div style={{...modalContent, borderTop: '5px solid #ef4444'}}>
+            <h3 style={{ marginTop: 0, marginBottom: '15px', color: '#0f172a' }}>⚠️ Xác nhận xóa?</h3>
+            <p style={{ color: '#64748b', fontSize: '15px', lineHeight: '1.5' }}>
+              Có chắc muốn xóa khóa học này không?!! 
+            </p>
+            <div style={modalActions}>
+              <button onClick={() => setShowDeleteModal(false)} style={neutralBtn}>Hủy</button>
+              <button onClick={confirmDelete} style={{...dangerBtn, borderRadius: '10px'}}>XÓA!!! 🗑️</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// Giữ lại bộ style chuẩn ở cuối file để code luôn sạch đẹp
 const inputStyle = { flex: 1, padding: '14px', borderRadius: '12px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '15px' };
 const primaryBtn = { padding: '15px', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', fontSize: '16px' };
 const infoBtn = { padding: '8px 16px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginRight: '10px' };
@@ -247,5 +338,9 @@ const dangerBtn = { padding: '8px 16px', backgroundColor: '#ef4444', color: 'whi
 const successBtn = { padding: '12px 24px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' };
 const neutralBtn = { padding: '8px 16px', backgroundColor: '#64748b', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' };
 const smallBtn = { padding: '5px 12px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' };
+
+const modalOverlay = { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000 };
+const modalContent = { backgroundColor: 'white', padding: '30px', borderRadius: '20px', width: '450px', boxShadow: '0 20px 25px rgba(0,0,0,0.2)', animation: 'fadeIn 0.2s ease' };
+const modalActions = { display: 'flex', gap: '10px', marginTop: '25px', justifyContent: 'flex-end' };
 
 export default CourseManager;

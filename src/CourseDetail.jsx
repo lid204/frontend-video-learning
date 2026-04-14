@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_BASE_URL from './config/api';
 
-const CourseDetail = ({ courseId, onBack }) => {
+const CourseDetail = ({ courseId, onBack, onAddToCart }) => {
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCourseDetail = async () => {
       try {
-        const response = await axios.get(`https://backend-video-learning-lid204s-projects.vercel.app/api/courses/${courseId}`);
+        const response = await axios.get(`${API_BASE_URL}/courses/${courseId}`);
         setCourse(response.data);
         setLoading(false);
       } catch (error) {
@@ -33,7 +34,7 @@ const CourseDetail = ({ courseId, onBack }) => {
         <div style={{ flex: '2', minWidth: '600px' }}>
           <h1 style={{ fontSize: '32px', color: '#0f172a', marginBottom: '10px' }}>{course.title}</h1>
           <p style={{ color: '#64748b', fontSize: '16px', marginBottom: '20px' }}>
-            📁 Danh mục: <strong>{course.category_name || 'Chưa phân loại'}</strong> | 👨‍🏫 Giảng viên: <strong>{course.teacher_name}</strong>
+            📁 Danh mục: <strong>{course.category_name || 'Chưa phân loại'}</strong>
           </p>
           
           <img 
@@ -51,19 +52,28 @@ const CourseDetail = ({ courseId, onBack }) => {
           />
         </div>
 
-        {/* CỘT PHẢI: Giỏ hàng / Chốt sale (Để Nhu làm tiếp) */}
+        {/* CỘT PHẢI: Giỏ hàng / Chốt sale */}
         <div style={{ flex: '1', minWidth: '300px' }}>
           <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', position: 'sticky', top: '40px' }}>
             <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#ef4444', marginBottom: '20px' }}>
               {Number(course.price).toLocaleString('vi-VN')} đ
             </div>
             
-            <button style={{ width: '100%', padding: '15px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '10px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '15px' }}>
-              Đăng ký học ngay
+            {/* 👇 ĐÃ GẮN LỆNH onClick VÀO ĐÂY 👇 */}
+            <button 
+              onClick={() => onAddToCart(course)} 
+              style={{ width: '100%', padding: '15px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '10px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '15px', transition: '0.2s', boxShadow: '0 4px 6px rgba(59,130,246,0.3)' }}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#2563eb'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#3b82f6'}
+            >
+              Đăng ký học ngay 🛒
             </button>
-            <p style={{ textAlign: 'center', color: '#64748b', fontSize: '14px', margin: 0 }}>
-              Khu vực này sẽ được tích hợp Giỏ hàng ở Task sau.
-            </p>
+
+            <ul style={{ color: '#64748b', fontSize: '14px', lineHeight: '1.6', paddingLeft: '20px', margin: 0 }}>
+              <li>Thanh toán an toàn qua quét mã QR</li>
+              <li>Kích hoạt khóa học ngay lập tức</li>
+              <li>Học mọi lúc, mọi nơi, không giới hạn</li>
+            </ul>
           </div>
         </div>
       </div>

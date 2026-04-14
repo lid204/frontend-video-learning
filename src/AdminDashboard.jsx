@@ -5,8 +5,9 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   RadialBarChart, RadialBar
 } from 'recharts';
+import API_BASE_URL from './config/api';
 
-const BASE_URL = 'https://backend-video-learning-lid204s-projects.vercel.app/api';
+const BASE_URL = API_BASE_URL;
 
 // ====== MOCK DATA (fallback khi API chưa có data) ======
 const MOCK_OVERVIEW = {
