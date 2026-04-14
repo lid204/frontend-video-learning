@@ -44,6 +44,9 @@ function HomePageContent({
   const [courseCurriculum, setCourseCurriculum] = useState([]);
   const detailRef = useRef(null); 
 
+  const [categories, setCategories] = useState([]);
+  const [activeCategoryId, setActiveCategoryId] = useState(null);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -52,10 +55,14 @@ function HomePageContent({
         setLoading(true);
         setErrorMessage('');
 
-        const courseRes = await axios.get(`${API_BASE_URL}/courses`);
+        const [courseRes, catRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/courses`),
+          axios.get(`${API_BASE_URL}/categories`)
+        ]);
 
         if (!isMounted) return;
         setCourses(normalizeCourses(courseRes.data));
+        setCategories([{ id: null, name: 'Tất cả' }, ...catRes.data]);
       } catch (err) {
         console.error('Lỗi tải trang chủ:', err);
         if (!isMounted) return;
@@ -74,7 +81,6 @@ function HomePageContent({
       };
     }, []); 
 
-    // --- (Phần code dưới này như toggleExpand giữ nguyên) ---
   const toggleExpand = async (courseId) => {
   try {
     const res = await axios.get(`${API_BASE_URL}/courses/${courseId}/curriculum`);
@@ -86,16 +92,22 @@ function HomePageContent({
   }
 };
 
+  // 👇 CHỈ SỬA Ở ĐÂY SỐ 1: Bổ sung thêm điều kiện lọc theo Danh mục (activeCategoryId)
   const filteredCourses = useMemo(() => {
     const keyword = searchQuery.trim().toLowerCase();
-    if (!keyword) return courses;
 
     return courses.filter((course) => {
       const title = String(course?.title || '').toLowerCase();
       const description = stripHtmlTags(course?.description || '').toLowerCase();
-      return title.includes(keyword) || description.includes(keyword);
+      
+      const matchSearch = !keyword || title.includes(keyword) || description.includes(keyword);
+      // Dùng 2 dấu bằng (==) để khớp với ID danh mục
+      const matchCategory = activeCategoryId == null || course.category_id == activeCategoryId;
+
+      return matchSearch && matchCategory;
     });
-  }, [courses, searchQuery]);
+  }, [courses, searchQuery, activeCategoryId]); // Nhớ đưa activeCategoryId vào mảng này
+  // 👆 KẾT THÚC SỬA SỐ 1
 
   const handleSearch = () => {
     const keyword = searchQuery.trim();
@@ -163,6 +175,11 @@ function HomePageContent({
           background-color: #3b82f6;
           color: white;
           transform: scale(1.05);
+        }
+        .category-pill.active {
+          background-color: #3b82f6;
+          color: white;
+          border-color: #3b82f6;
         }
         .search-btn:hover {
           background-color: #2563eb;
@@ -321,6 +338,7 @@ function HomePageContent({
               border: 'none',
               borderRadius: '50px',
               outline: 'none',
+              color: '#0f172a',
             }}
           />
           <button
@@ -353,24 +371,27 @@ function HomePageContent({
           zIndex: 10,
         }}
       >
-        {['💻 Lập trình Web', '🎨 Thiết kế UI/UX', '📱 Lập trình Mobile', '📈 Marketing', '🤖 AI & Data'].map((cat, index) => (
+        {/* 👇 CHỈ SỬA Ở ĐÂY SỐ 2: Thay vì ghi chết tên danh mục, ta dùng danh mục lấy từ Database */}
+        {categories.map((cat) => (
           <div
-            key={index}
-            onClick={() => handleOpenCourses(cat)}
-            className="category-pill"
+            key={cat.id || 'all'}
+            onClick={() => setActiveCategoryId(cat.id)}
+            className={`category-pill ${activeCategoryId === cat.id ? 'active' : ''}`}
             style={{
-              backgroundColor: 'white',
+              backgroundColor: activeCategoryId === cat.id ? '#3b82f6' : 'white',
+              color: activeCategoryId === cat.id ? 'white' : '#475569',
               padding: '10px 20px',
               borderRadius: '30px',
               boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
               cursor: 'pointer',
               fontWeight: 'bold',
-              color: '#475569',
+              border: '1px solid #f1f5f9',
             }}
           >
-            {cat}
+            {cat.name}
           </div>
         ))}
+        {/* 👆 KẾT THÚC SỬA SỐ 2 */}
       </div>
 
       <div
@@ -545,7 +566,7 @@ function HomePageContent({
 
       <div ref={detailRef} style={{ maxWidth: '1200px', margin: '50px auto', padding: '0 20px 100px 20px' }}>
         {expandingCourseId && (
-          <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '24px', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', animation: 'fadeInUp 0.5s ease' }}>
+          <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '24px', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '30px' }}>
               <div style={{ flex: 1 }}>
                 <h2 style={{ fontSize: '32px', color: '#0f172a', margin: '0 0 15px 0', fontWeight: '800' }}>
