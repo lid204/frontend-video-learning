@@ -9,6 +9,9 @@ import CourseManager from './CourseManager';
 import LearningRoom from './LearningRoom';
 import CourseDetail from './CourseDetail';
 import AdminDashboard from './AdminDashboard';
+import Cart from './cart'; 
+import Payment from './Payment'; 
+import MyCourses from './MyCourses';
 import API_BASE_URL from './config/api';
 
 function App() {
@@ -20,7 +23,8 @@ function App() {
   const [viewingCourseId, setViewingCourseId] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [courseSearchKeyword, setCourseSearchKeyword] = useState('');
-
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [cartItems, setCartItems] = useState([]); 
   const [activeTab, setActiveTab] = useState('users');
   const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState({
@@ -42,6 +46,7 @@ function App() {
 
   const API_URL = `${API_BASE_URL}/users`;
 
+  // canManage CHỈ dùng để chặn truy cập vào Dashboard Quản lý
   const canManage =
     isLoggedIn &&
     (currentUser?.role === 'admin' || currentUser?.role === 'teacher');
@@ -116,6 +121,7 @@ function App() {
     setLoginForm({ email: '', password: '' });
     setSelectedCourse(null);
     setViewingCourseId(null);
+    setCartItems([]);
     setCurrentView('home');
   };
 
@@ -125,20 +131,12 @@ function App() {
   };
 
   const handleOpenCourseDetail = (courseOrId) => {
-    const id =
-      typeof courseOrId === 'object' ? courseOrId?.id : courseOrId;
-
+    const id = typeof courseOrId === 'object' ? courseOrId?.id : courseOrId;
     if (!id) return;
-
     setViewingCourseId(id);
-
     if (typeof courseOrId === 'object') {
-      setSelectedCourse({
-        id: courseOrId.id,
-        title: courseOrId.title,
-      });
+      setSelectedCourse({ id: courseOrId.id, title: courseOrId.title });
     }
-
     setCurrentView('courseDetail');
   };
 
@@ -150,14 +148,12 @@ function App() {
 
   const handleSubmitAdmin = async (e) => {
     e.preventDefault();
-
     try {
       if (editingId) {
         await axios.put(`${API_URL}/${editingId}`, formData);
       } else {
         await axios.post(API_URL, formData);
       }
-
       setFormData({ name: '', email: '', phone: '', role: 'student' });
       setEditingId(null);
       fetchUsers();
@@ -179,7 +175,6 @@ function App() {
 
   const handleDelete = async (id) => {
     if (!window.confirm('⚠️ Bạn có chắc muốn xóa vĩnh viễn?')) return;
-
     try {
       await axios.delete(`${API_URL}/${id}`);
       fetchUsers();
@@ -193,19 +188,57 @@ function App() {
     const name = (user?.name || '').toLowerCase();
     const email = (user?.email || '').toLowerCase();
     const keyword = searchTerm.toLowerCase();
-
     return name.includes(keyword) || email.includes(keyword);
   });
 
+  // 👇 ĐÃ SỬA: Chuyển thẳng vào view learning thay vì dashboard 👇
   const goToLearning = (course) => {
     setSelectedCourse(course);
-    setActiveTab('learning');
-    setCurrentView('dashboard');
+    setCurrentView('learning');
   };
 
   const toastNode = (
     <ToastContainer position="top-right" autoClose={3000} theme="colored" />
   );
+
+  const cartNode = (
+    <>
+      {/* NÚT TRUY CẬP NHANH VÀO KHÓA HỌC CỦA TÔI */}
+      {isLoggedIn && (
+        <button 
+          onClick={() => setCurrentView('myCourses')}
+          style={{ position: 'fixed', bottom: '170px', right: '20px', padding: '15px', borderRadius: '50%', backgroundColor: '#8b5cf6', color: 'white', border: 'none', cursor: 'pointer', fontSize: '20px', zIndex: 1000, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+          title="Khóa học của tôi"
+        >
+          📚
+        </button>
+      )}
+
+      {/* NÚT GIỎ HÀNG */}
+      <button 
+        onClick={() => setIsCartOpen(true)}
+        style={{ position: 'fixed', bottom: '100px', right: '20px', padding: '15px', borderRadius: '50%', backgroundColor: '#10b981', color: 'white', border: 'none', cursor: 'pointer', fontSize: '20px', zIndex: 1000, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+      >
+        🛒 ({cartItems.length})
+      </button>
+
+      {isCartOpen && (
+        <Cart 
+          cartItems={cartItems} 
+          onClose={() => setIsCartOpen(false)} 
+          onRemoveItem={(id) => setCartItems(cartItems.filter(item => item.id !== id))} 
+          onCheckout={() => {
+            setIsCartOpen(false); 
+            setCurrentView('payment'); 
+          }} 
+        />
+      )}
+    </>
+  );
+
+  /* =========================================
+     PHẦN 1: CÁC TRANG CÔNG KHAI (AI CŨNG VÀO ĐƯỢC)
+  ========================================= */
 
   if (currentView === 'home') {
     return (
@@ -218,7 +251,6 @@ function App() {
           isLoggedIn={isLoggedIn}
           currentUser={currentUser}
           onLogoutClick={handleLogout}
-          // 👇 Gắn công tắc onViewCourse tại đây
           onViewCourse={(id) => {
             setViewingCourseId(id);
             setCurrentView('courseDetail');
@@ -228,26 +260,13 @@ function App() {
         {canManage && (
           <button
             onClick={handleOpenDashboard}
-            style={{
-              position: 'fixed',
-              bottom: '30px',
-              right: '30px',
-              padding: '15px 25px',
-              backgroundColor: '#f59e0b',
-              color: 'white',
-              border: 'none',
-              borderRadius: '50px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-              zIndex: 1000,
-            }}
+            style={{ position: 'fixed', bottom: '30px', right: '30px', padding: '15px 25px', backgroundColor: '#f59e0b', color: 'white', border: 'none', borderRadius: '50px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 1000 }}
           >
             ⚙️ Quản Lý Hệ Thống
           </button>
         )}
-
+        
+        {cartNode}
         {toastNode}
       </>
     );
@@ -256,11 +275,8 @@ function App() {
   if (currentView === 'courses') {
     return (
       <>
-        <CoursesPage
-          onBackToHome={() => setCurrentView('home')}
-          onViewCourse={handleOpenCourseDetail}
-          initialSearchQuery={courseSearchKeyword}
-        />
+        <CoursesPage onBackToHome={() => setCurrentView('home')} onViewCourse={handleOpenCourseDetail} initialSearchQuery={courseSearchKeyword} />
+        {cartNode}
         {toastNode}
       </>
     );
@@ -269,11 +285,24 @@ function App() {
   if (currentView === 'courseDetail') {
     return (
       <>
-        <CourseDetail
-          courseId={viewingCourseId}
-          onBack={() => setCurrentView('courses')}
+        <CourseDetail 
+          courseId={viewingCourseId} 
+          onBack={() => setCurrentView('courses')} 
+          onAddToCart={(courseData) => {
+            if (!isLoggedIn || !currentUser) {
+              alert("⚠️ Vui lòng Đăng nhập hoặc Đăng ký để thêm khóa học vào giỏ!");
+              setCurrentView('auth'); 
+              return; 
+            }
+            const isAlreadyInCart = cartItems.some(item => item.id === courseData.id);
+            if (!isAlreadyInCart) {
+              setCartItems([...cartItems, courseData]); 
+            }
+            setIsCartOpen(true); 
+          }}
         />
         {toastNode}
+        {cartNode}
       </>
     );
   }
@@ -281,169 +310,34 @@ function App() {
   if (currentView === 'auth') {
     return (
       <>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            flex: 1,
-            minHeight: '100vh',
-            backgroundColor: '#f0f4f8',
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'white',
-              padding: '40px',
-              borderRadius: '16px',
-              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
-              width: '90%',
-              maxWidth: '420px',
-              position: 'relative',
-            }}
-          >
-            <button
-              onClick={() => setCurrentView('home')}
-              style={{
-                position: 'absolute',
-                top: '20px',
-                left: '20px',
-                background: 'none',
-                border: 'none',
-                color: '#64748b',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-              }}
-            >
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, minHeight: '100vh', backgroundColor: '#f0f4f8' }}>
+          <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '16px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', width: '90%', maxWidth: '420px', position: 'relative' }}>
+            <button onClick={() => setCurrentView('home')} style={{ position: 'absolute', top: '20px', left: '20px', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontWeight: 'bold' }}>
               🔙 Quay lại
             </button>
-
-            <div
-              style={{
-                textAlign: 'center',
-                marginBottom: '30px',
-                marginTop: '20px',
-              }}
-            >
+            <div style={{ textAlign: 'center', marginBottom: '30px', marginTop: '20px' }}>
               <div style={{ fontSize: '40px', marginBottom: '10px' }}>🎓</div>
-              <h2 style={{ color: '#0f172a', margin: 0 }}>
-                {authMode === 'login'
-                  ? 'Chào mừng trở lại'
-                  : 'Tạo tài khoản mới'}
-              </h2>
+              <h2 style={{ color: '#0f172a', margin: 0 }}>{authMode === 'login' ? 'Chào mừng trở lại' : 'Tạo tài khoản mới'}</h2>
             </div>
-
             {authMode === 'login' ? (
-              <form
-                onSubmit={handleLogin}
-                style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
-              >
-                <input
-                  type="email"
-                  placeholder="Email của bạn"
-                  required
-                  style={inputStyle}
-                  value={loginForm.email}
-                  onChange={(e) =>
-                    setLoginForm({ ...loginForm, email: e.target.value })
-                  }
-                />
-                <input
-                  type="password"
-                  placeholder="Mật khẩu"
-                  required
-                  style={inputStyle}
-                  value={loginForm.password}
-                  onChange={(e) =>
-                    setLoginForm({ ...loginForm, password: e.target.value })
-                  }
-                />
-                <button type="submit" style={primaryBtnStyle}>
-                  Đăng Nhập 🚀
-                </button>
+              <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <input type="email" placeholder="Email của bạn" required style={inputStyle} value={loginForm.email} onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })} />
+                <input type="password" placeholder="Mật khẩu" required style={inputStyle} value={loginForm.password} onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })} />
+                <button type="submit" style={primaryBtnStyle}>Đăng Nhập 🚀</button>
               </form>
             ) : (
-              <form
-                onSubmit={handleRegister}
-                style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
-              >
-                <input
-                  type="text"
-                  placeholder="Họ và tên"
-                  required
-                  style={inputStyle}
-                  value={registerForm.name}
-                  onChange={(e) =>
-                    setRegisterForm({ ...registerForm, name: e.target.value })
-                  }
-                />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  required
-                  style={inputStyle}
-                  value={registerForm.email}
-                  onChange={(e) =>
-                    setRegisterForm({ ...registerForm, email: e.target.value })
-                  }
-                />
-                <input
-                  type="text"
-                  placeholder="Số điện thoại"
-                  required
-                  style={inputStyle}
-                  value={registerForm.phone}
-                  onChange={(e) =>
-                    setRegisterForm({ ...registerForm, phone: e.target.value })
-                  }
-                />
-                <input
-                  type="password"
-                  placeholder="Mật khẩu"
-                  required
-                  style={inputStyle}
-                  value={registerForm.password}
-                  onChange={(e) =>
-                    setRegisterForm({ ...registerForm, password: e.target.value })
-                  }
-                />
-                <button type="submit" style={successBtnStyle}>
-                  Đăng Ký Ngay ✨
-                </button>
+              <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <input type="text" placeholder="Họ và tên" required style={inputStyle} value={registerForm.name} onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })} />
+                <input type="email" placeholder="Email" required style={inputStyle} value={registerForm.email} onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })} />
+                <input type="text" placeholder="Số điện thoại" required style={inputStyle} value={registerForm.phone} onChange={(e) => setRegisterForm({ ...registerForm, phone: e.target.value })} />
+                <input type="password" placeholder="Mật khẩu" required style={inputStyle} value={registerForm.password} onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })} />
+                <button type="submit" style={successBtnStyle}>Đăng Ký Ngay ✨</button>
               </form>
             )}
-
-            <div
-              style={{
-                textAlign: 'center',
-                marginTop: '25px',
-                fontSize: '14px',
-                color: '#64748b',
-              }}
-            >
-              {authMode === 'login' ? (
-                <span
-                  onClick={() => setAuthMode('register')}
-                  style={{
-                    color: '#3b82f6',
-                    cursor: 'pointer',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  Chưa có tài khoản? Đăng ký
-                </span>
-              ) : (
-                <span
-                  onClick={() => setAuthMode('login')}
-                  style={{
-                    color: '#3b82f6',
-                    cursor: 'pointer',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  Đã có tài khoản? Đăng nhập
-                </span>
-              )}
+            <div style={{ textAlign: 'center', marginTop: '25px', fontSize: '14px', color: '#64748b' }}>
+              <span onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')} style={{ color: '#3b82f6', cursor: 'pointer', fontWeight: 'bold' }}>
+                {authMode === 'login' ? 'Chưa có tài khoản? Đăng ký' : 'Đã có tài khoản? Đăng nhập'}
+              </span>
             </div>
           </div>
         </div>
@@ -452,263 +346,156 @@ function App() {
     );
   }
 
+  /* =========================================
+     PHẦN 2: CÁC TRANG CỦA HỌC VIÊN / NGƯỜI ĐÃ MUA HÀNG
+     (Phải nằm TÙ LÊN TRÊN lệnh check Admin)
+  ========================================= */
+
+  if (currentView === 'myCourses') {
+    return (
+      <>
+        <MyCourses 
+          currentUser={currentUser}
+          onBack={() => setCurrentView('home')}
+          onGoToLearning={(course) => {
+            setSelectedCourse(course);
+            setCurrentView('learning');
+          }}
+        />
+        {cartNode}
+        {toastNode}
+      </>
+    );
+  }
+
+  // PHÒNG HỌC HIỆN TẠI ĐÃ ĐƯỢC MỞ KHÓA CHO TẤT CẢ MỌI NGƯỜI CÓ QUYỀN VÀO
+  if (currentView === 'learning') {
+    return (
+      <>
+        <LearningRoom
+          course={selectedCourse}
+          currentUser={currentUser}
+          onBack={() => {
+            // Nếu là admin vào từ dashboard thì trả về dashboard, học viên thì trả về myCourses
+            if (canManage) {
+              setCurrentView('dashboard');
+              setActiveTab('courses');
+            } else {
+              setCurrentView('myCourses');
+            }
+          }} 
+        />
+        {toastNode}
+      </>
+    );
+  }
+
+  if (currentView === 'payment') {
+    return (
+      <>
+        <Payment 
+          currentUser={currentUser}
+          cartItems={cartItems}     
+          totalAmount={cartItems.reduce((sum, item) => sum + parseInt(Number(item.price) || 0, 10), 0)}
+          onPaymentSuccess={() => {
+            setCartItems([]); 
+            setCurrentView('myCourses'); 
+          }}
+          onCancel={() => setCurrentView('home')}
+        />
+        {toastNode}
+      </>
+    );
+  }
+
+  /* =========================================
+     PHẦN 3: KHU VỰC ĐỘC QUYỀN CỦA ADMIN / TEACHER
+  ========================================= */
+
+  // CHẶN HỌC SINH TẠI ĐÂY: Nếu là student mà cố lọt xuống dưới này sẽ bị chặn
   if (!canManage) {
     return (
       <>
-        <div
-          style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#f8fafc',
-            flexDirection: 'column',
-            gap: '16px',
-          }}
-        >
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', flexDirection: 'column', gap: '16px' }}>
           <h2>Không có quyền truy cập</h2>
-          <button onClick={() => setCurrentView('home')} style={primaryBtnStyle}>
-            Về trang chủ
-          </button>
+          <button onClick={() => setCurrentView('home')} style={primaryBtnStyle}>Về trang chủ</button>
         </div>
         {toastNode}
       </>
     );
   }
 
+  // GIAO DIỆN ADMIN DASHBOARD
   return (
     <>
       <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
-        <div
-          style={{
-            width: '280px',
-            backgroundColor: '#0f172a',
-            color: 'white',
-            display: 'flex',
-            flexDirection: 'column',
-            boxShadow: '4px 0 10px rgba(0,0,0,0.1)',
-            zIndex: 10,
-          }}
-        >
-          <div
-            style={{
-              padding: '30px 20px',
-              textAlign: 'center',
-              borderBottom: '1px solid rgba(255,255,255,0.1)',
-            }}
-          >
-            <div
-              style={{
-                fontSize: '24px',
-                fontWeight: '800',
-                color: '#38bdf8',
-                letterSpacing: '1px',
-              }}
-            >
-              E-LEARNING
-            </div>
-            <div
-              style={{
-                fontSize: '14px',
-                color: '#94a3b8',
-                marginTop: '8px',
-                padding: '5px 10px',
-                backgroundColor: 'rgba(255,255,255,0.05)',
-                borderRadius: '20px',
-                display: 'inline-block',
-              }}
-            >
+        <div style={{ width: '280px', backgroundColor: '#0f172a', color: 'white', display: 'flex', flexDirection: 'column', boxShadow: '4px 0 10px rgba(0,0,0,0.1)', zIndex: 10 }}>
+          <div style={{ padding: '30px 20px', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ fontSize: '24px', fontWeight: '800', color: '#38bdf8', letterSpacing: '1px' }}>E-LEARNING</div>
+            <div style={{ fontSize: '14px', color: '#94a3b8', marginTop: '8px', padding: '5px 10px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '20px', display: 'inline-block' }}>
               👤 {currentUser?.name || 'Người dùng'}
             </div>
           </div>
 
           <div style={{ padding: '20px', flex: 1 }}>
-            <div
-              style={{
-                fontSize: '12px',
-                color: '#64748b',
-                fontWeight: 'bold',
-                marginBottom: '10px',
-                textTransform: 'uppercase',
-              }}
-            >
-              Menu Quản Lý
-            </div>
-
-            <ul
-              style={{
-                listStyle: 'none',
-                padding: 0,
-                margin: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-              }}
-            >
-              <li onClick={() => setCurrentView('home')} style={{ ...menuItem, backgroundColor: 'rgba(255,255,255,0.05)' }}>
-                🏠 Về Trang Chủ
-              </li>
-
+            <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold', marginBottom: '10px', textTransform: 'uppercase' }}>Menu Quản Lý</div>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <li onClick={() => setCurrentView('home')} style={{ ...menuItem, backgroundColor: 'rgba(255,255,255,0.05)' }}>🏠 Về Trang Chủ</li>
               {currentUser?.role === 'admin' && (
-                <li
-                  onClick={() => setActiveTab('users')}
-                  style={activeTab === 'users' ? activeMenuItem : menuItem}
-                >
-                  👥 Người dùng
-                </li>
+                <li onClick={() => setActiveTab('users')} style={activeTab === 'users' ? activeMenuItem : menuItem}>👥 Người dùng</li>
               )}
-
               {(currentUser?.role === 'admin' || currentUser?.role === 'teacher') && (
                 <>
-                  <li
-                    onClick={() => setActiveTab('analytics')}
-                    style={activeTab === 'analytics' ? analyticsMenuItem : menuItem}
-                  >
-                    📊 Analytics
-                  </li>
-                  <li
-                    onClick={() => setActiveTab('courses')}
-                    style={activeTab === 'courses' ? activeMenuItem : menuItem}
-                  >
-                    📚 Khóa học
-                  </li>
-                  <li
-                    onClick={() => {
-                      setSelectedCourse({
-                        id: selectedCourse?.id || 101,
-                        title: selectedCourse?.title || 'Lập trình ReactJS cho Gen Z',
-                      });
-                      setActiveTab('learning');
-                    }}
-                    style={activeTab === 'learning' ? activeMenuItem : menuItem}
-                  >
-                    🎓 Phòng Học
-                  </li>
+                  <li onClick={() => setActiveTab('analytics')} style={activeTab === 'analytics' ? analyticsMenuItem : menuItem}>📊 Analytics</li>
+                  <li onClick={() => setActiveTab('courses')} style={activeTab === 'courses' ? activeMenuItem : menuItem}>📚 Khóa học</li>
                 </>
               )}
             </ul>
           </div>
 
           <div style={{ padding: '20px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-            <button onClick={handleLogout} style={{ ...dangerBtnStyle, width: '100%' }}>
-              🚪 Đăng Xuất
-            </button>
+            <button onClick={handleLogout} style={{ ...dangerBtnStyle, width: '100%' }}>🚪 Đăng Xuất</button>
           </div>
         </div>
-        <div
-          style={{
-            flex: 1,
-            padding:
-              activeTab === 'learning' || activeTab === 'analytics' ? '0' : '40px',
-            overflowY: 'auto',
-          }}
-        >
+
+        <div style={{ flex: 1, padding: activeTab === 'analytics' ? '0' : '40px', overflowY: 'auto' }}>
           {activeTab === 'users' && currentUser?.role === 'admin' && (
             <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-              <h2 style={{ color: '#0f172a', fontSize: '28px', marginBottom: '30px' }}>
-                Quản Lý Người Dùng
-              </h2>
-
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  padding: '30px',
-                  borderRadius: '16px',
-                  boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
-                  marginBottom: '30px',
-                }}
-              >
+              <h2 style={{ color: '#0f172a', fontSize: '28px', marginBottom: '30px' }}>Quản Lý Người Dùng</h2>
+              <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '30px' }}>
                 <form onSubmit={handleSubmitAdmin} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-                  <input
-                    style={{ ...inputStyle, flex: 1 }}
-                    type="text"
-                    placeholder="Họ và tên"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
-                  <input
-                    style={{ ...inputStyle, flex: 1 }}
-                    type="email"
-                    placeholder="Email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
-                  <input
-                    style={{ ...inputStyle, flex: 1 }}
-                    type="text"
-                    placeholder="Số điện thoại"
-                    required
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  />
-                  <select
-                    style={inputStyle}
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  >
+                  <input style={{ ...inputStyle, flex: 1 }} type="text" placeholder="Họ và tên" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                  <input style={{ ...inputStyle, flex: 1 }} type="email" placeholder="Email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                  <input style={{ ...inputStyle, flex: 1 }} type="text" placeholder="Số điện thoại" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
+                  <select style={inputStyle} value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })}>
                     <option value="student">Học viên</option>
                     <option value="teacher">Giáo viên</option>
                     <option value="admin">Admin</option>
                   </select>
-                  <button type="submit" style={editingId ? warningBtnStyle : successBtnStyle}>
-                    {editingId ? 'Cập Nhật' : 'Lưu Mới'}
-                  </button>
+                  <button type="submit" style={editingId ? warningBtnStyle : successBtnStyle}>{editingId ? 'Cập Nhật' : 'Lưu Mới'}</button>
                 </form>
               </div>
 
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  padding: '20px',
-                  borderRadius: '16px',
-                  boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
-                  marginBottom: '20px',
-                }}
-              >
-                <input
-                  type="text"
-                  placeholder="Tìm user theo tên hoặc email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ ...inputStyle, width: '100%' }}
-                />
+              <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '20px' }}>
+                <input type="text" placeholder="Tìm user theo tên hoặc email..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ ...inputStyle, width: '100%' }} />
               </div>
 
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  borderRadius: '16px',
-                  boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
-                  overflow: 'hidden',
-                }}
-              >
+              <div style={{ backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ backgroundColor: '#f8fafc' }}>
-                      <th style={thStyle}>ID</th>
-                      <th style={thStyle}>Người dùng</th>
-                      <th style={thStyle}>Vai trò</th>
-                      <th style={{ ...thStyle, textAlign: 'right' }}>Thao tác</th>
+                      <th style={thStyle}>ID</th><th style={thStyle}>Người dùng</th><th style={thStyle}>Vai trò</th><th style={{ ...thStyle, textAlign: 'right' }}>Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredUsers.map((user) => (
                       <tr key={user.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                         <td style={tdStyle}>#{user.id}</td>
-                        <td style={tdStyle}>
-                          <div style={{ fontWeight: 'bold' }}>{user.name}</div>
-                          <small>{user.email}</small>
-                        </td>
+                        <td style={tdStyle}><div style={{ fontWeight: 'bold' }}>{user.name}</div><small>{user.email}</small></td>
                         <td style={tdStyle}>{user.role}</td>
                         <td style={{ ...tdStyle, textAlign: 'right' }}>
-                          <button onClick={() => handleEdit(user)} style={neutralBtnStyle}>
-                            Sửa
-                          </button>
-                          <button onClick={() => handleDelete(user.id)} style={dangerBtnStyle}>
-                            Xóa
-                          </button>
+                          <button onClick={() => handleEdit(user)} style={neutralBtnStyle}>Sửa</button>
+                          <button onClick={() => handleDelete(user.id)} style={dangerBtnStyle}>Xóa</button>
                         </td>
                       </tr>
                     ))}
@@ -720,95 +507,23 @@ function App() {
 
           {activeTab === 'courses' && <CourseManager onGoToLearning={goToLearning} />}
           {activeTab === 'analytics' && <AdminDashboard />}
-          {activeTab === 'learning' && (
-            <LearningRoom
-              course={selectedCourse}
-              currentUser={currentUser}
-              onBack={() => setActiveTab('courses')}
-            />
-          )}
         </div>
       </div>
-
       {toastNode}
     </>
   );
 }
 
-const inputStyle = {
-  padding: '14px',
-  border: '1px solid #cbd5e1',
-  borderRadius: '10px',
-  fontSize: '15px',
-  outline: 'none',
-};
-
-const primaryBtnStyle = {
-  padding: '14px',
-  backgroundColor: '#3b82f6',
-  color: 'white',
-  border: 'none',
-  borderRadius: '10px',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  cursor: 'pointer',
-};
-
-const successBtnStyle = {
-  ...primaryBtnStyle,
-  backgroundColor: '#10b981',
-};
-
-const warningBtnStyle = {
-  ...primaryBtnStyle,
-  backgroundColor: '#f59e0b',
-};
-
-const dangerBtnStyle = {
-  ...primaryBtnStyle,
-  backgroundColor: '#ef4444',
-};
-
-const neutralBtnStyle = {
-  padding: '8px 16px',
-  backgroundColor: 'white',
-  color: '#334155',
-  border: '1px solid #cbd5e1',
-  borderRadius: '8px',
-  cursor: 'pointer',
-  marginRight: '5px',
-};
-
-const menuItem = {
-  padding: '16px 20px',
-  cursor: 'pointer',
-  borderRadius: '12px',
-  color: '#cbd5e1',
-  fontSize: '15px',
-  fontWeight: '500',
-};
-
-const activeMenuItem = {
-  ...menuItem,
-  backgroundColor: '#3b82f6',
-  color: 'white',
-  fontWeight: 'bold',
-};
-
-const analyticsMenuItem = {
-  ...menuItem,
-  background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-  color: 'white',
-  fontWeight: 'bold',
-};
-
-const thStyle = {
-  padding: '20px',
-  textAlign: 'left',
-};
-
-const tdStyle = {
-  padding: '20px',
-};
+const inputStyle = { padding: '14px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '15px', outline: 'none' };
+const primaryBtnStyle = { padding: '14px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '10px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' };
+const successBtnStyle = { ...primaryBtnStyle, backgroundColor: '#10b981' };
+const warningBtnStyle = { ...primaryBtnStyle, backgroundColor: '#f59e0b' };
+const dangerBtnStyle = { ...primaryBtnStyle, backgroundColor: '#ef4444' };
+const neutralBtnStyle = { padding: '8px 16px', backgroundColor: 'white', color: '#334155', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', marginRight: '5px' };
+const menuItem = { padding: '16px 20px', cursor: 'pointer', borderRadius: '12px', color: '#cbd5e1', fontSize: '15px', fontWeight: '500' };
+const activeMenuItem = { ...menuItem, backgroundColor: '#3b82f6', color: 'white', fontWeight: 'bold' };
+const analyticsMenuItem = { ...menuItem, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', fontWeight: 'bold' };
+const thStyle = { padding: '20px', textAlign: 'left' };
+const tdStyle = { padding: '20px' };
 
 export default App;
