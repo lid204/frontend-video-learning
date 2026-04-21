@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import API_BASE_URL from './config/api';
+import API_BASE_URL from '../../config/api';
 
 const CourseDetail = ({ courseId, onBack, onAddToCart }) => {
   const [course, setCourse] = useState(null);
@@ -11,14 +11,14 @@ const CourseDetail = ({ courseId, onBack, onAddToCart }) => {
       try {
         const response = await axios.get(`${API_BASE_URL}/courses/${courseId}`);
         setCourse(response.data);
-        setLoading(false);
+        setLoading(false);  
       } catch (error) {
         console.error("Lỗi tải chi tiết khóa học", error);
         setLoading(false);
       }
     };
     fetchCourseDetail();
-  }, [courseId]);
+  }, [course]);
 
   if (loading) return <div style={{ textAlign: 'center', padding: '50px' }}>⏳ Đang tải thông tin...</div>;
   if (!course) return <div style={{ textAlign: 'center', padding: '50px' }}>❌ Không tìm thấy khóa học!</div>;

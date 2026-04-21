@@ -3,8 +3,8 @@ import LearningSpace from './LearningSpace';
 import axios from 'axios';
 import { FaStar, FaRegStar, FaPlay, FaCheckCircle, FaClock, FaArrowLeft, FaChalkboardTeacher } from 'react-icons/fa';
 import { MdOutlineRateReview } from 'react-icons/md';
-import CurriculumAccordion from "./components/CurriculumAccordion";
-import API_BASE_URL from './config/api';
+import CurriculumAccordion from "../CurriculumAccordion";
+import API_BASE_URL from '../../config/api';
 
 function StarRating({ rating, onRate, readonly = false, size = 24 }) {
   const [hovered, setHovered] = useState(0);

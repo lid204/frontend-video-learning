@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import CurriculumAccordion from './components/CurriculumAccordion';
+import CurriculumAccordion from '../CurriculumAccordion';
 import axios from 'axios';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
@@ -7,7 +7,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { useInRouterContext, useNavigate } from 'react-router-dom';
-import API_BASE_URL from './config/api';
+import API_BASE_URL from '../../config/api';
 
 function stripHtmlTags(text) {
   if (!text) return 'Chưa có mô tả cho khóa học này.';
@@ -36,11 +36,13 @@ function HomePageContent({
   onAdminClick,
   navigateTo,
 }) {
+  console.log(">>>1 "+import.meta.env.VITE_API_BASE_URL)
+  console.log(">>>2 "+API_BASE_URL)
   const [courses, setCourses] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
-  const [expandingCourseId, setExpandingCourseId] = useState(null);
+  const [expandingCourseId, setExpandingCourseId] = useState(null); 
   const [courseCurriculum, setCourseCurriculum] = useState([]);
   const detailRef = useRef(null); 
 
