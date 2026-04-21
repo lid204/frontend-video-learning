@@ -3,7 +3,7 @@ import axios from 'axios';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import ReactPlayer from 'react-player';
-import API_BASE_URL from './config/api';
+import API_BASE_URL from '../../config/api';
 import { toast } from 'react-toastify';
 
 const getVideoUrl = (lesson) => {

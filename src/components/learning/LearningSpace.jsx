@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactPlayer from 'react-player';
 import axios from 'axios';
-import API_BASE_URL from './config/api';
+import API_BASE_URL from '../../config/api';
 
 export default function LearningSpace({
   lessonId,
