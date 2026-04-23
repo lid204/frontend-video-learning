@@ -20,7 +20,7 @@ export default function UserManager() {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(API_BASE_URL);
+      const response = await axios.get(API_URL);
       setUsers(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       console.error('Lỗi tải danh sách user:', err);
